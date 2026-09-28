@@ -39,7 +39,7 @@ export function ForgotForm() {
             <MailCheck />
           </div>
           <h1 style={{ fontSize: 28 }}>Check your inbox</h1>
-          <p className="muted">If {email} has an Nudgewise account, we sent a link to reset your password. It expires in 30 minutes.</p>
+          <p className="muted">If {email} has an Tickrupee account, we sent a link to reset your password. It expires in 30 minutes.</p>
           <Link href="/login" className="btn btn-soft" style={{ marginTop: 10 }}>
             <ArrowLeft /> Back to sign in
           </Link>

@@ -1,8 +1,8 @@
 {
-  "name": "nudgewise",
+  "name": "tickrupee",
   "version": "1.0.0",
   "private": true,
-  "description": "Nudgewise — tasks, reminders and money management in one beautiful app.",
+  "description": "Tickrupee — tasks, reminders and money management in one beautiful app.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

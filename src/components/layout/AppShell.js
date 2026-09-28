@@ -55,7 +55,7 @@ function Sidebar() {
         <span className="brand-mark">
           <Logo />
         </span>
-        Nudgewise
+        Tickrupee
       </Link>
 
       <nav className="stack" style={{ gap: 2 }} aria-label="Main">
@@ -155,7 +155,7 @@ function Topbar() {
         <span className="brand-mark" style={{ width: 30, height: 30 }}>
           <Logo size={17} />
         </span>
-        Nudgewise
+        Tickrupee
       </Link>
       <div className="grow" />
       <NotificationBell />

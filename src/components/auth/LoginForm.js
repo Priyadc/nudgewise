@@ -104,7 +104,7 @@ export default function LoginForm({ googleEnabled, callbackUrl = '/dashboard', i
       </form>
 
       <p className="muted center" style={{ marginTop: 24 }}>
-        New to Nudgewise?{' '}
+        New to Tickrupee?{' '}
         <Link href={`/register${callbackUrl !== '/dashboard' ? `?callbackUrl=${encodeURIComponent(callbackUrl)}` : ''}`} style={{ color: 'var(--accent)', fontWeight: 700 }}>
           Create an account
         </Link>

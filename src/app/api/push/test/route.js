@@ -6,7 +6,7 @@ export const POST = route(async (_req, { userId }) => {
     return fail('Push is not configured (add VAPID keys to your env).', 503);
   }
   const sent = await sendPush(userId, {
-    title: 'Nudgewise notifications are on 🎉',
+    title: 'Tickrupee notifications are on 🎉',
     body: 'You will get reminders here, even when the app is closed.',
     url: '/reminders',
   });

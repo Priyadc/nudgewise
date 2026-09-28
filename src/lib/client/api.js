@@ -33,9 +33,9 @@ export function todayParams() {
 }
 
 /** Tiny event bus so pages refresh when something is added elsewhere (quick add, voice, etc.) */
-export const emit = (name, detail) => window.dispatchEvent(new CustomEvent(`nudgewise:${name}`, { detail }));
+export const emit = (name, detail) => window.dispatchEvent(new CustomEvent(`tickrupee:${name}`, { detail }));
 export const on = (name, fn) => {
   const h = (e) => fn(e.detail);
-  window.addEventListener(`nudgewise:${name}`, h);
-  return () => window.removeEventListener(`nudgewise:${name}`, h);
+  window.addEventListener(`tickrupee:${name}`, h);
+  return () => window.removeEventListener(`tickrupee:${name}`, h);
 };

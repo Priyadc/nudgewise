@@ -15,7 +15,7 @@ export default function AuthShell({ children }) {
             <span className="brand-mark">
               <Logo />
             </span>
-            Nudgewise
+            Tickrupee
           </Link>
           <ThemeToggle />
         </div>

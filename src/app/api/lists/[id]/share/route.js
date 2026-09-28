@@ -48,15 +48,15 @@ export const POST = route(async (req, { params, userId }) => {
         }
         await deliver(
           invitee._id,
-          { title: `${me.name || me.email} shared "${list.name}" with you`, body: 'Open Nudgewise to see the list.', url: `/tasks?list=${list._id}`, type: 'share' },
+          { title: `${me.name || me.email} shared "${list.name}" with you`, body: 'Open Tickrupee to see the list.', url: `/tasks?list=${list._id}`, type: 'share' },
           { inApp: true, push: true, email: false }
         );
       }
       await sendEmail({
         to: body.email,
-        subject: `${me.name || 'Someone'} shared a list with you on Nudgewise`,
+        subject: `${me.name || 'Someone'} shared a list with you on Tickrupee`,
         heading: `You're invited to "${list.name}"`,
-        body: `${me.name || me.email} wants to plan together with you on Nudgewise. Open the link to join the list.`,
+        body: `${me.name || me.email} wants to plan together with you on Tickrupee. Open the link to join the list.`,
         ctaLabel: 'Join the list',
         ctaUrl: link,
       });

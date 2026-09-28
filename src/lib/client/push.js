@@ -17,7 +17,7 @@ export function pushPermission() {
 
 /** Asks permission, subscribes this browser and saves the subscription on the server */
 export async function enablePush() {
-  if (!pushSupported()) throw new Error('This browser does not support push notifications. On iPhone, add Nudgewise to your Home Screen first.');
+  if (!pushSupported()) throw new Error('This browser does not support push notifications. On iPhone, add Tickrupee to your Home Screen first.');
   const key = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
   if (!key) throw new Error('Push is not configured on the server yet (missing VAPID keys).');
 

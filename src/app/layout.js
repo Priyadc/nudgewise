@@ -7,13 +7,13 @@ const jakarta = Plus_Jakarta_Sans({ subsets: ['latin'], variable: '--font-jakart
 const grotesk = Space_Grotesk({ subsets: ['latin'], variable: '--font-grotesk', display: 'swap' });
 
 export const metadata = {
-  title: { default: 'Nudgewise — Tasks, reminders & money in one place', template: '%s · Nudgewise' },
+  title: { default: 'Tickrupee — Tasks, reminders & money in one place', template: '%s · Tickrupee' },
   description:
-    'Nudgewise brings your to-dos, reminders, bills and spending into one beautiful app. Voice input, photo attachments, shared lists and dark mode.',
-  applicationName: 'Nudgewise',
+    'Tickrupee brings your to-dos, reminders, bills and spending into one beautiful app. Voice input, photo attachments, shared lists and dark mode.',
+  applicationName: 'Tickrupee',
   manifest: '/manifest.json',
   icons: { icon: '/icon.svg', apple: '/icons/icon-192.png' },
-  appleWebApp: { capable: true, title: 'Nudgewise', statusBarStyle: 'black-translucent' },
+  appleWebApp: { capable: true, title: 'Tickrupee', statusBarStyle: 'black-translucent' },
 };
 
 export const viewport = {

@@ -13,7 +13,7 @@ const tags = z.array(z.string().trim().min(1).max(30)).max(10);
 const cloudinaryUrl = z
   .string()
   .url()
-  .refine((u) => u.startsWith('https://res.cloudinary.com/'), 'Images must be uploaded through Nudgewise');
+  .refine((u) => u.startsWith('https://res.cloudinary.com/'), 'Images must be uploaded through Tickrupee');
 const attachment = z.object({
   url: cloudinaryUrl,
   publicId: z.string().max(200).optional(),

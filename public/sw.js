@@ -1,5 +1,5 @@
-/* Nudgewise service worker — push notifications + offline fallback page */
-const CACHE = 'nudgewise-v1';
+/* Tickrupee service worker — push notifications + offline fallback page */
+const CACHE = 'tickrupee-v1';
 const OFFLINE_URL = '/offline.html';
 
 self.addEventListener('install', (event) => {
@@ -26,9 +26,9 @@ self.addEventListener('push', (event) => {
   try {
     data = event.data ? event.data.json() : {};
   } catch {
-    data = { title: 'Nudgewise', body: event.data && event.data.text() };
+    data = { title: 'Tickrupee', body: event.data && event.data.text() };
   }
-  const title = data.title || 'Nudgewise reminder';
+  const title = data.title || 'Tickrupee reminder';
   event.waitUntil(
     self.registration.showNotification(title, {
       body: data.body || '',

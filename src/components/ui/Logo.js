@@ -1,4 +1,4 @@
-/** Nudgewise logo mark — a core with a circling ring and satellite */
+/** Tickrupee logo mark — a core with a circling ring and satellite */
 export default function Logo({ size = 20 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">

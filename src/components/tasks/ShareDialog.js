@@ -38,7 +38,7 @@ export default function ShareDialog({ open, onClose, list, onUpdated }) {
     toast.success('Link copied');
   }
   async function nativeShare() {
-    const text = `Join my "${list.name}" list on Nudgewise`;
+    const text = `Join my "${list.name}" list on Tickrupee`;
     if (navigator.share) {
       try {
         await navigator.share({ title: list.name, text, url: link });
@@ -86,7 +86,7 @@ export default function ShareDialog({ open, onClose, list, onUpdated }) {
                           <option value="editor">Joiners can edit</option>
                           <option value="viewer">Joiners can only view</option>
                         </select>
-                        <button className="btn btn-soft btn-sm" onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(`Join my "${list.name}" list on Nudgewise: ${link}`)}`, '_blank', 'noopener')}>
+                        <button className="btn btn-soft btn-sm" onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(`Join my "${list.name}" list on Tickrupee: ${link}`)}`, '_blank', 'noopener')}>
                           <MessageCircle /> WhatsApp
                         </button>
                         <button className="btn btn-soft btn-sm" onClick={nativeShare}>
@@ -125,7 +125,7 @@ export default function ShareDialog({ open, onClose, list, onUpdated }) {
                   {busy === 'invite' ? <Loader2 className="spin" /> : 'Invite'}
                 </button>
               </div>
-              <span className="hint">If they already use Nudgewise they're added instantly; otherwise they get an email with the join link.</span>
+              <span className="hint">If they already use Tickrupee they're added instantly; otherwise they get an email with the join link.</span>
             </form>
           </>
         ) : (
