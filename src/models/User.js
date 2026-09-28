@@ -16,6 +16,21 @@ const UserSchema = new mongoose.Schema(
     },
     resetTokenHash: { type: String, select: false },
     resetTokenExpires: { type: Date, select: false },
+    // Money categories the user created themselves
+    categories: {
+      type: [
+        new mongoose.Schema(
+          {
+            name: { type: String, required: true, trim: true, maxlength: 40 },
+            type: { type: String, enum: ['expense', 'income'], required: true },
+            icon: { type: String, default: 'Tag', maxlength: 30 },
+            color: { type: String, default: '#8b5cf6', maxlength: 9 },
+          },
+          { _id: true }
+        ),
+      ],
+      default: [],
+    },
   },
   { timestamps: true }
 );

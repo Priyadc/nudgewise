@@ -9,7 +9,8 @@ import CategoryIcon from '@/components/ui/CategoryIcon';
 import ImageUploader from '@/components/ui/ImageUploader';
 import VoiceButton, { VoiceBar } from '@/components/ui/VoiceButton';
 import { api, emit } from '@/lib/client/api';
-import { EXPENSE_CATEGORIES, INCOME_CATEGORIES, PAYMENT_METHODS } from '@/lib/categories';
+import { getCategories, PAYMENT_METHODS } from '@/lib/categories';
+import CategoryPicker from './CategoryPicker';
 import { parseTransaction } from '@/lib/nlp';
 import { formatMoney, toDateInput } from '@/lib/format';
 
@@ -35,7 +36,6 @@ export function TransactionModal({ open, onClose, txn, currency, defaultType = '
 
   if (!form) return null;
   const set = (p) => setForm((f) => ({ ...f, ...p }));
-  const cats = form.type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
 
   function fromVoice(text) {
     const p = parseTransaction(text);
@@ -123,14 +123,7 @@ export function TransactionModal({ open, onClose, txn, currency, defaultType = '
 
           <div className="field">
             <span className="label">Category</span>
-            <div className="cat-grid">
-              {cats.map((c) => (
-                <button key={c.name} type="button" className="cat-option" aria-pressed={form.category === c.name} onClick={() => set({ category: c.name })}>
-                  <CategoryIcon name={c.name} size={34} />
-                  {c.name}
-                </button>
-              ))}
-            </div>
+            <CategoryPicker type={form.type} value={form.category} onChange={(name) => set({ category: name })} />
           </div>
 
           <div className="grid grid-2" style={{ gap: 12 }}>
@@ -200,7 +193,7 @@ export function BudgetModal({ open, onClose, budget, used = [], currency }) {
 
   useEffect(() => {
     if (open) {
-      setCategory(budget?.category || EXPENSE_CATEGORIES.find((c) => !used.includes(c.name))?.name || 'Other');
+      setCategory(budget?.category || getCategories('expense').find((c) => !used.includes(c.name))?.name || 'Other');
       setLimit(budget?.limit ? String(budget.limit) : '');
     }
     // `used` is intentionally left out: it is a new array on every render
@@ -235,14 +228,7 @@ export function BudgetModal({ open, onClose, budget, used = [], currency }) {
         {!budget && (
           <div className="field">
             <span className="label">Category</span>
-            <div className="cat-grid">
-              {EXPENSE_CATEGORIES.filter((c) => !used.includes(c.name)).map((c) => (
-                <button key={c.name} type="button" className="cat-option" aria-pressed={category === c.name} onClick={() => setCategory(c.name)}>
-                  <CategoryIcon name={c.name} size={30} />
-                  {c.name}
-                </button>
-              ))}
-            </div>
+            <CategoryPicker type="expense" value={category} onChange={setCategory} exclude={used} />
           </div>
         )}
         <div className="field">
@@ -338,7 +324,7 @@ export function BillModal({ open, onClose, bill, currency }) {
               Category
             </label>
             <select id="bill-cat" className="select" value={f.category} onChange={(e) => set({ category: e.target.value })}>
-              {EXPENSE_CATEGORIES.map((c) => (
+              {getCategories('expense').map((c) => (
                 <option key={c.name}>{c.name}</option>
               ))}
             </select>

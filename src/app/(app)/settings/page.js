@@ -4,12 +4,13 @@ import { useEffect, useState } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { useTheme } from 'next-themes';
 import { motion } from 'framer-motion';
-import { Bell, Check, Download, Globe, Laptop, Loader2, LogOut, Mail, Monitor, Moon, Palette, Smartphone, Sun, Trash2, UserRound, Coins, ShieldAlert } from 'lucide-react';
+import { Bell, Check, Download, Globe, Laptop, Loader2, LogOut, Mail, Monitor, Moon, Palette, Smartphone, Sun, Trash2, UserRound, Coins, ShieldAlert, Tags } from 'lucide-react';
 import { toast } from 'sonner';
 import { useApp } from '@/components/layout/AppContext';
 import { Avatar, Switch } from '@/components/ui/Controls';
 import { Confirm } from '@/components/ui/Modal';
 import ImageUploader from '@/components/ui/ImageUploader';
+import CategoryIcon from '@/components/ui/CategoryIcon';
 import { api } from '@/lib/client/api';
 import { ACCENTS, applyAccent } from '@/lib/theme';
 import { CURRENCIES } from '@/lib/format';
@@ -35,7 +36,7 @@ function Section({ icon: Icon, title, text, children, delay = 0 }) {
 const TIMEZONES = ['Asia/Kolkata', 'Asia/Dubai', 'Asia/Singapore', 'Asia/Tokyo', 'Europe/London', 'Europe/Berlin', 'America/New_York', 'America/Chicago', 'America/Los_Angeles', 'Australia/Sydney'];
 
 export default function SettingsPage() {
-  const { user, setUser, features } = useApp();
+  const { user, setUser, features, categories, setCategories } = useApp();
   const { update } = useSession();
   const { theme, setTheme } = useTheme();
   const [name, setName] = useState('');
@@ -267,6 +268,37 @@ export default function SettingsPage() {
             </div>
             <Switch checked={s.emailReminders !== false} onChange={(v) => setSetting('emailReminders', v, v ? 'Email reminders on' : 'Email reminders off')} label="Email reminders" />
           </div>
+        </Section>
+
+        <Section icon={Tags} title="My money categories" text="Categories you created. Add new ones while adding an expense or income." delay={0.18}>
+          {categories.length === 0 ? (
+            <p className="small muted">You haven't created any yet. Tap “New” in the category list when adding money.</p>
+          ) : (
+            <div className="stack stack-sm">
+              {categories.map((c) => (
+                <div key={c._id} className="row" style={{ padding: '4px 0' }}>
+                  <CategoryIcon meta={c} size={32} />
+                  <span className="grow bold small">{c.name}</span>
+                  <span className={`chip ${c.type === 'income' ? 'chip-success' : ''}`}>{c.type}</span>
+                  <button
+                    className="btn btn-ghost btn-icon btn-sm"
+                    aria-label={`Delete ${c.name}`}
+                    onClick={async () => {
+                      try {
+                        const d = await api(`/api/categories?id=${c._id}`, { method: 'DELETE' });
+                        setCategories(d.categories);
+                        toast.success('Category removed. Past entries keep their label.');
+                      } catch (err) {
+                        toast.error(err.message);
+                      }
+                    }}
+                  >
+                    <Trash2 />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </Section>
 
         <Section icon={Download} title="Your data" text="Download everything you have stored in Tickrupee." delay={0.2}>

@@ -29,7 +29,7 @@ import { TransactionModal, BudgetModal, BillModal } from '@/components/finance/F
 import CategoryIcon from '@/components/ui/CategoryIcon';
 import { AnimatedNumber, EmptyState, Progress, Skeleton, SkeletonList, Tabs } from '@/components/ui/Controls';
 import { api, on } from '@/lib/client/api';
-import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from '@/lib/categories';
+import { getCategories } from '@/lib/categories';
 import { formatMoney, relativeDay } from '@/lib/format';
 
 function monthKey(d = new Date()) {
@@ -304,7 +304,7 @@ function FinanceInner() {
                     </select>
                     <select className="select" value={filter.category} onChange={(e) => setFilter((f) => ({ ...f, category: e.target.value }))} style={{ width: 180, height: 40 }} aria-label="Category">
                       <option value="">All categories</option>
-                      {(filter.type === 'income' ? INCOME_CATEGORIES : filter.type === 'expense' ? EXPENSE_CATEGORIES : [...EXPENSE_CATEGORIES, ...INCOME_CATEGORIES]).map((c) => (
+                      {(filter.type ? getCategories(filter.type) : [...getCategories('expense'), ...getCategories('income')]).map((c) => (
                         <option key={c.name + c.icon}>{c.name}</option>
                       ))}
                     </select>

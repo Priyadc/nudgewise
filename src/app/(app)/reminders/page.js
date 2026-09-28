@@ -145,6 +145,13 @@ export default function RemindersPage() {
       if (modal === 'new') {
         await api('/api/reminders', { method: 'POST', body });
         toast.success('Reminder set', { description: `${relativeDay(body.remindAt)} at ${formatTime(body.remindAt)}` });
+        // Nudge people to allow notifications, so the reminder reaches them even when the app is closed
+        if (features.push && pushPermission() === 'default') {
+          toast('Get this reminder even when the app is closed?', {
+            duration: 12000,
+            action: { label: 'Turn on', onClick: turnOnPush },
+          });
+        }
       } else {
         await api(`/api/reminders/${modal._id}`, { method: 'PATCH', body });
         toast.success('Reminder updated');

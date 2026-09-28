@@ -1,4 +1,4 @@
-import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from '@/lib/categories';
+import { getCategories } from '@/lib/categories';
 
 /**
  * Natural-language quick add, similar to Todoist / TickTick.
@@ -161,9 +161,12 @@ export function parseTransaction(input) {
 
   const incomeWords = /\b(salary|received|got|earned|income|credited|refund|cashback|bonus|stipend)\b/;
   const type = incomeWords.test(text) ? 'income' : 'expense';
-  const cats = type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
+  const cats = getCategories(type);
+  // The user's own category names count as keywords too ("spent 400 on gym supplements")
   const category =
-    cats.find((c) => c.keywords.some((k) => text.includes(k)))?.name || (type === 'income' ? 'Other Income' : 'Other');
+    cats.find((c) => c.custom && text.includes(c.name.toLowerCase()))?.name ||
+    cats.find((c) => c.keywords.some((k) => text.includes(k)))?.name ||
+    (type === 'income' ? 'Other Income' : 'Other');
 
   let method = 'upi';
   if (/\bcash\b/.test(text)) method = 'cash';
