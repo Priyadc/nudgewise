@@ -9,7 +9,7 @@ export const ACCENTS = [
   { id: 'fuchsia', label: 'Fuchsia', hue: 330, swatch: '#d946ef' },
 ];
 
-export const ACCENT_STORAGE_KEY = 'tickrupee-accent';
+export const ACCENT_STORAGE_KEY = 'pockeazy-accent';
 
 export function applyAccent(id) {
   const accent = ACCENTS.find((a) => a.id === id) || ACCENTS[0];

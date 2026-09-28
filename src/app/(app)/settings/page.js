@@ -107,7 +107,7 @@ export default function SettingsPage() {
       <div className="page-header">
         <div>
           <h1>Settings</h1>
-          <p>Make Tickrupee yours.</p>
+          <p>Make Pockeazy yours.</p>
         </div>
         <button className="btn btn-outline" onClick={() => signOut({ callbackUrl: '/' })}>
           <LogOut /> Sign out
@@ -242,7 +242,7 @@ export default function SettingsPage() {
                 {!features.push
                   ? 'Not configured on the server yet (add VAPID keys).'
                   : perm === 'unsupported'
-                    ? 'Not supported here. On iPhone, add Tickrupee to your Home Screen first.'
+                    ? 'Not supported here. On iPhone, add Pockeazy to your Home Screen first.'
                     : perm === 'denied'
                       ? 'Blocked — allow notifications in your browser site settings.'
                       : 'Works on Android, desktop and installed iPhone apps.'}
@@ -301,7 +301,7 @@ export default function SettingsPage() {
           )}
         </Section>
 
-        <Section icon={Download} title="Your data" text="Download everything you have stored in Tickrupee." delay={0.2}>
+        <Section icon={Download} title="Your data" text="Download everything you have stored in Pockeazy." delay={0.2}>
           <a className="btn btn-outline" href="/api/user/export" download>
             <Download /> Export as JSON
           </a>

@@ -1,8 +1,8 @@
 {
-  "name": "tickrupee",
+  "name": "pockeazy",
   "version": "1.0.0",
   "private": true,
-  "description": "Tickrupee — tasks, reminders and money management in one beautiful app.",
+  "description": "Pockeazy — tasks, reminders and money management in one beautiful app.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

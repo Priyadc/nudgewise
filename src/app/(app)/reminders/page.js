@@ -222,7 +222,7 @@ export default function RemindersPage() {
                 <BellRing />
               </span>
               <div>
-                <div className="bold">Get reminders even when Tickrupee is closed</div>
+                <div className="bold">Get reminders even when Pockeazy is closed</div>
                 <div className="small muted">{perm === 'denied' ? 'Notifications are blocked — allow them in your browser site settings.' : 'Turn on push notifications for this device.'}</div>
               </div>
             </div>

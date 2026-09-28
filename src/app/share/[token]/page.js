@@ -29,7 +29,7 @@ export default async function SharePage({ params }) {
           <h1 style={{ fontSize: 28 }}>Link not available</h1>
           <p className="muted">This share link is invalid or the owner has turned sharing off. Ask them to send a new link.</p>
           <Link href="/" className="btn btn-soft" style={{ alignSelf: 'flex-start' }}>
-            Go to Tickrupee
+            Go to Pockeazy
           </Link>
         </div>
       ) : (

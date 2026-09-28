@@ -7,13 +7,13 @@ const jakarta = Plus_Jakarta_Sans({ subsets: ['latin'], variable: '--font-jakart
 const grotesk = Space_Grotesk({ subsets: ['latin'], variable: '--font-grotesk', display: 'swap' });
 
 export const metadata = {
-  title: { default: 'Tickrupee — Tasks, reminders & money in one place', template: '%s · Tickrupee' },
+  title: { default: 'Pockeazy — Tasks, reminders & money in one place', template: '%s · Pockeazy' },
   description:
-    'Tickrupee brings your to-dos, reminders, bills and spending into one beautiful app. Voice input, photo attachments, shared lists and dark mode.',
-  applicationName: 'Tickrupee',
+    'Pockeazy brings your to-dos, reminders, bills and spending into one beautiful app. Voice input, photo attachments, shared lists and dark mode.',
+  applicationName: 'Pockeazy',
   manifest: '/manifest.json',
   icons: { icon: '/icon.svg', apple: '/icons/icon-192.png' },
-  appleWebApp: { capable: true, title: 'Tickrupee', statusBarStyle: 'black-translucent' },
+  appleWebApp: { capable: true, title: 'Pockeazy', statusBarStyle: 'black-translucent' },
 };
 
 export const viewport = {

@@ -13,7 +13,7 @@ if (cloudinaryReady) {
   });
 }
 
-export const userFolder = (userId) => `tickrupee/${userId}`;
+export const userFolder = (userId) => `pockeazy/${userId}`;
 
 /** Signature for a direct browser → Cloudinary upload (files never pass through our server) */
 export function signUpload(userId) {

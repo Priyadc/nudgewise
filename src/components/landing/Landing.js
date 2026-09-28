@@ -21,7 +21,7 @@ import Logo from '@/components/ui/Logo';
 import ThemeToggle from '@/components/ui/ThemeToggle';
 
 const FEATURES = [
-  { icon: CircleCheck, title: 'Smart tasks', text: 'Lists, priorities, subtasks, tags and recurring tasks. Type "Pay rent tomorrow 9am !high" and Tickrupee fills in the rest.' },
+  { icon: CircleCheck, title: 'Smart tasks', text: 'Lists, priorities, subtasks, tags and recurring tasks. Type "Pay rent tomorrow 9am !high" and Pockeazy fills in the rest.' },
   { icon: Bell, title: 'Reminders that reach you', text: 'Push notifications on your phone and laptop, email reminders and in-app alerts — repeating daily, weekly or monthly.' },
   { icon: Wallet, title: 'Money, sorted', text: 'Track income and expenses by category, set monthly budgets, and never miss a bill with due-date alerts.' },
   { icon: Mic, title: 'Voice to text', text: 'Tap the mic and speak. Add tasks, notes and expenses hands-free — "spent 250 on Swiggy" just works.' },
@@ -29,7 +29,7 @@ const FEATURES = [
   { icon: Share2, title: 'Share with friends', text: 'Share a list with one link. Friends can view or edit, and you choose who stays in the loop.' },
   { icon: ChartPie, title: 'Beautiful insights', text: 'Animated charts show where your money goes and how productive your week was.' },
   { icon: Moon, title: 'Light, dark & your colour', text: 'Switch themes instantly and pick an accent colour that feels like yours.' },
-  { icon: Smartphone, title: 'Install it like an app', text: 'Add Tickrupee to your home screen on Android, iPhone or desktop. It opens full-screen, just like a native app.' },
+  { icon: Smartphone, title: 'Install it like an app', text: 'Add Pockeazy to your home screen on Android, iPhone or desktop. It opens full-screen, just like a native app.' },
 ];
 
 const fadeUp = {
@@ -47,7 +47,7 @@ export default function Landing({ signedIn }) {
           <span className="brand-mark">
             <Logo />
           </span>
-          Tickrupee
+          Pockeazy
         </Link>
         <div className="row">
           <ThemeToggle />
@@ -77,7 +77,7 @@ export default function Landing({ signedIn }) {
             Your tasks, reminders <span className="gradient-text">& money</span> — all ticked off.
           </motion.h1>
           <motion.p variants={fadeUp} custom={2} className="hero-lead">
-            Plan your day, get reminded at the right moment, and see exactly where your money goes. Tickrupee is the calm,
+            Plan your day, get reminded at the right moment, and see exactly where your money goes. Pockeazy is the calm,
             beautiful home for everything you need to remember.
           </motion.p>
           <motion.div variants={fadeUp} custom={3} className="row row-wrap">
@@ -178,7 +178,7 @@ export default function Landing({ signedIn }) {
       </section>
 
       <footer className="footer">
-        <span>© {new Date().getFullYear()} Tickrupee. Built with Next.js & MongoDB.</span>
+        <span>© {new Date().getFullYear()} Pockeazy. Built with Next.js & MongoDB.</span>
         <span className="row" style={{ gap: 16 }}>
           <Link href="/login">Sign in</Link>
           <Link href="/register">Create account</Link>
