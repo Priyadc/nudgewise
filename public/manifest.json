@@ -1,6 +1,6 @@
 {
-  "name": "Orbit — Tasks, reminders & money",
-  "short_name": "Orbit",
+  "name": "Nudgewise — Tasks, reminders & money",
+  "short_name": "Nudgewise",
   "description": "Your tasks, reminders, bills and spending in one beautiful app.",
   "start_url": "/dashboard",
   "scope": "/",

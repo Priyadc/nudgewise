@@ -1,6 +1,6 @@
-# ◉ Orbit — tasks, reminders & money in one app
+# ◉ Nudgewise — tasks, reminders & money in one app
 
-Orbit is a full-stack productivity app: to-do lists, reminders, bills and expense tracking,
+Nudgewise is a full-stack productivity app: to-do lists, reminders, bills and expense tracking,
 with voice input, photo attachments, shared lists, push notifications, and light/dark themes.
 
 **Stack:** Next.js 15 (App Router, JavaScript) · React 19 · MongoDB Atlas + Mongoose · NextAuth (email/password + Google) ·
@@ -24,7 +24,7 @@ Everything else (Google, images, push, email) is optional and switches on when i
 
 | Service | What for | Where |
 |---|---|---|
-| **MongoDB Atlas** | Database | atlas.mongodb.com → create free M0 cluster → Database Access (user) → Network Access → add `0.0.0.0/0` → Connect → Drivers → copy URI into `MONGODB_URI` (add `/orbit` before `?`) |
+| **MongoDB Atlas** | Database | atlas.mongodb.com → create free M0 cluster → Database Access (user) → Network Access → add `0.0.0.0/0` → Connect → Drivers → copy URI into `MONGODB_URI` (add `/nudgewise` before `?`) |
 | **NextAuth secret** | Signs login sessions | `openssl rand -base64 32` → `NEXTAUTH_SECRET` |
 | **Google OAuth** | "Continue with Google" | console.cloud.google.com → APIs & Services → OAuth consent screen (External) → Credentials → OAuth client ID (Web). Authorized redirect URIs: `http://localhost:3000/api/auth/callback/google` and `https://YOUR-APP.vercel.app/api/auth/callback/google` |
 | **Cloudinary** | Task photos, receipts, avatars | cloudinary.com → Dashboard → copy cloud name, API key, API secret |
@@ -37,7 +37,7 @@ Everything else (Google, images, push, email) is optional and switches on when i
 1. Push this folder to a GitHub repository.
 2. vercel.com → **Add New Project** → import the repo (framework auto-detected as Next.js).
 3. Add every variable from `.env.local` under **Settings → Environment Variables**. Set
-   `NEXTAUTH_URL` and `NEXT_PUBLIC_APP_URL` to your production URL (e.g. `https://orbit-priya.vercel.app`).
+   `NEXTAUTH_URL` and `NEXT_PUBLIC_APP_URL` to your production URL (e.g. `https://nudgewise-priya.vercel.app`).
 4. Deploy. Then add the production callback URL in Google Cloud (see table above).
 5. **Reminder scheduler (important).** Vercel's free Hobby plan only runs cron jobs once a day
    (`vercel.json` includes a daily backup run). For on-time reminders, create a free job at

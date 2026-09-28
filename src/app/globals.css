@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Orbit design system
+   Nudgewise design system
    - Colours use OKLCH driven by --accent-h, so every accent theme re-tints the UI.
    - Light / dark via [data-theme] (set by next-themes).
    ========================================================================== */

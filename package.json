@@ -1,8 +1,8 @@
 {
-  "name": "orbit",
+  "name": "nudgewise",
   "version": "1.0.0",
   "private": true,
-  "description": "Orbit — tasks, reminders and money management in one beautiful app.",
+  "description": "Nudgewise — tasks, reminders and money management in one beautiful app.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

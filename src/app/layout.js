@@ -7,13 +7,13 @@ const jakarta = Plus_Jakarta_Sans({ subsets: ['latin'], variable: '--font-jakart
 const grotesk = Space_Grotesk({ subsets: ['latin'], variable: '--font-grotesk', display: 'swap' });
 
 export const metadata = {
-  title: { default: 'Orbit — Tasks, reminders & money in one place', template: '%s · Orbit' },
+  title: { default: 'Nudgewise — Tasks, reminders & money in one place', template: '%s · Nudgewise' },
   description:
-    'Orbit brings your to-dos, reminders, bills and spending into one beautiful app. Voice input, photo attachments, shared lists and dark mode.',
-  applicationName: 'Orbit',
+    'Nudgewise brings your to-dos, reminders, bills and spending into one beautiful app. Voice input, photo attachments, shared lists and dark mode.',
+  applicationName: 'Nudgewise',
   manifest: '/manifest.json',
   icons: { icon: '/icon.svg', apple: '/icons/icon-192.png' },
-  appleWebApp: { capable: true, title: 'Orbit', statusBarStyle: 'black-translucent' },
+  appleWebApp: { capable: true, title: 'Nudgewise', statusBarStyle: 'black-translucent' },
 };
 
 export const viewport = {

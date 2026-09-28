@@ -56,7 +56,7 @@ export default function RegisterForm({ googleEnabled, callbackUrl = '/dashboard'
 
       const login = await signIn('credentials', { email: form.email, password: form.password, redirect: false });
       if (login?.error) throw new Error('Account created — please sign in.');
-      toast.success(`Welcome to Orbit, ${form.name.split(' ')[0]}! 🎉`);
+      toast.success(`Welcome to Nudgewise, ${form.name.split(' ')[0]}! 🎉`);
       router.replace(callbackUrl);
       router.refresh();
     } catch (err) {
@@ -148,7 +148,7 @@ export default function RegisterForm({ googleEnabled, callbackUrl = '/dashboard'
         <button className="btn btn-primary btn-lg btn-block" disabled={loading || !valid} style={{ marginTop: 6 }}>
           {loading ? <Loader2 className="spin" /> : null} Create account
         </button>
-        <p className="hint center">By signing up you agree to use Orbit responsibly. Your data is private to you.</p>
+        <p className="hint center">By signing up you agree to use Nudgewise responsibly. Your data is private to you.</p>
       </form>
 
       <p className="muted center" style={{ marginTop: 20 }}>

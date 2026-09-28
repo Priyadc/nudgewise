@@ -1,5 +1,5 @@
-/* Orbit service worker — push notifications + offline fallback page */
-const CACHE = 'orbit-v1';
+/* Nudgewise service worker — push notifications + offline fallback page */
+const CACHE = 'nudgewise-v1';
 const OFFLINE_URL = '/offline.html';
 
 self.addEventListener('install', (event) => {
@@ -26,9 +26,9 @@ self.addEventListener('push', (event) => {
   try {
     data = event.data ? event.data.json() : {};
   } catch {
-    data = { title: 'Orbit', body: event.data && event.data.text() };
+    data = { title: 'Nudgewise', body: event.data && event.data.text() };
   }
-  const title = data.title || 'Orbit reminder';
+  const title = data.title || 'Nudgewise reminder';
   event.waitUntil(
     self.registration.showNotification(title, {
       body: data.body || '',

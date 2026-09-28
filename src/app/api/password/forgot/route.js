@@ -20,7 +20,7 @@ export const POST = route(
 
     await sendEmail({
       to: user.email,
-      subject: 'Reset your Orbit password',
+      subject: 'Reset your Nudgewise password',
       heading: 'Reset your password',
       body: 'Click the button below to choose a new password. The link expires in 30 minutes. If you did not ask for this, you can ignore this email.',
       ctaLabel: 'Reset password',

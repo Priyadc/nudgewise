@@ -106,7 +106,7 @@ export default function SettingsPage() {
       <div className="page-header">
         <div>
           <h1>Settings</h1>
-          <p>Make Orbit yours.</p>
+          <p>Make Nudgewise yours.</p>
         </div>
         <button className="btn btn-outline" onClick={() => signOut({ callbackUrl: '/' })}>
           <LogOut /> Sign out
@@ -241,7 +241,7 @@ export default function SettingsPage() {
                 {!features.push
                   ? 'Not configured on the server yet (add VAPID keys).'
                   : perm === 'unsupported'
-                    ? 'Not supported here. On iPhone, add Orbit to your Home Screen first.'
+                    ? 'Not supported here. On iPhone, add Nudgewise to your Home Screen first.'
                     : perm === 'denied'
                       ? 'Blocked — allow notifications in your browser site settings.'
                       : 'Works on Android, desktop and installed iPhone apps.'}
@@ -269,7 +269,7 @@ export default function SettingsPage() {
           </div>
         </Section>
 
-        <Section icon={Download} title="Your data" text="Download everything you have stored in Orbit." delay={0.2}>
+        <Section icon={Download} title="Your data" text="Download everything you have stored in Nudgewise." delay={0.2}>
           <a className="btn btn-outline" href="/api/user/export" download>
             <Download /> Export as JSON
           </a>

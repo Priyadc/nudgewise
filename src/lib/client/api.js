@@ -33,9 +33,9 @@ export function todayParams() {
 }
 
 /** Tiny event bus so pages refresh when something is added elsewhere (quick add, voice, etc.) */
-export const emit = (name, detail) => window.dispatchEvent(new CustomEvent(`orbit:${name}`, { detail }));
+export const emit = (name, detail) => window.dispatchEvent(new CustomEvent(`nudgewise:${name}`, { detail }));
 export const on = (name, fn) => {
   const h = (e) => fn(e.detail);
-  window.addEventListener(`orbit:${name}`, h);
-  return () => window.removeEventListener(`orbit:${name}`, h);
+  window.addEventListener(`nudgewise:${name}`, h);
+  return () => window.removeEventListener(`nudgewise:${name}`, h);
 };
