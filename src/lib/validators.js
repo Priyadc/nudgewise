@@ -127,6 +127,14 @@ export const settingsSchema = z.object({
       timezone: z.string().max(60).optional(),
       emailReminders: z.boolean().optional(),
       pushReminders: z.boolean().optional(),
+      onboarded: z.boolean().optional(),
     })
     .optional(),
+});
+
+export const goalSchema = z.object({
+  name: z.string().trim().min(1, 'Give your goal a name').max(60),
+  emoji: z.string().max(8).optional(),
+  target: z.coerce.number().positive('Target must be more than 0').max(1e11),
+  deadline: z.coerce.date().nullable().optional(),
 });

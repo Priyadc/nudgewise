@@ -7,6 +7,7 @@ import Reminder from '@/models/Reminder';
 import Transaction from '@/models/Transaction';
 import Budget from '@/models/Budget';
 import Bill from '@/models/Bill';
+import Goal from '@/models/Goal';
 import Notification from '@/models/Notification';
 import PushSubscription from '@/models/PushSubscription';
 
@@ -36,6 +37,7 @@ export const DELETE = route(async (_req, { userId }) => {
     Transaction.deleteMany({ user: userId }),
     Budget.deleteMany({ user: userId }),
     Bill.deleteMany({ user: userId }),
+    Goal.deleteMany({ user: userId }),
     Notification.deleteMany({ user: userId }),
     PushSubscription.deleteMany({ user: userId }),
   ]);

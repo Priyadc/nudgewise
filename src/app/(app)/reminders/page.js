@@ -6,14 +6,17 @@ import { AlarmClock, Bell, BellOff, BellRing, Check, Clock, Mail, MoreHorizontal
 import { toast } from 'sonner';
 import { EmptyState, SkeletonList, Tabs } from '@/components/ui/Controls';
 import ReminderModal from '@/components/reminders/ReminderModal';
+import Examples from '@/components/ui/Examples';
+import { reminderExamples } from '@/lib/client/examples';
 import Menu from '@/components/ui/Menu';
 import { api, on } from '@/lib/client/api';
+import { deleteWithUndo } from '@/lib/client/undo';
 import { enablePush, pushPermission } from '@/lib/client/push';
 import { formatTime, relativeDay } from '@/lib/format';
 import { useApp } from '@/components/layout/AppContext';
 
 export default function RemindersPage() {
-  const { features } = useApp();
+  const { features, openSheet } = useApp();
   const [tab, setTab] = useState('active');
   const [items, setItems] = useState(null);
   const [modal, setModal] = useState(null); // null | 'new' | reminder
@@ -51,15 +54,14 @@ export default function RemindersPage() {
     }
   }
 
-  async function remove(r) {
-    setItems((xs) => xs.filter((x) => x._id !== r._id));
-    try {
-      await api(`/api/reminders/${r._id}`, { method: 'DELETE' });
-      toast.success('Reminder deleted');
-    } catch (err) {
-      toast.error(err.message);
-      load();
-    }
+  function remove(r) {
+    deleteWithUndo({
+      label: 'Reminder deleted',
+      description: r.title,
+      hide: () => setItems((xs) => xs.filter((x) => x._id !== r._id)),
+      restore: load,
+      commit: () => api(`/api/reminders/${r._id}`, { method: 'DELETE', keepalive: true }),
+    });
   }
 
   const snooze = (r, mins) => patch(r, { remindAt: new Date(Date.now() + mins * 60000), status: 'active' }, `Snoozed for ${mins >= 60 ? `${mins / 60}h` : `${mins} min`}`);
@@ -126,7 +128,7 @@ export default function RemindersPage() {
             icon={tab === 'active' ? BellOff : Check}
             title={tab === 'active' ? 'No reminders yet' : 'Nothing here yet'}
             text={tab === 'active' ? 'Medicine, calls, bill dates — add one and forget about it until it matters.' : 'Reminders you mark as done show up here.'}
-            action={tab === 'active' && <button className="btn btn-soft" onClick={() => setModal('new')}><Plus /> New reminder</button>}
+            action={tab === 'active' && <Examples items={reminderExamples(openSheet)} />}
           />
         ) : (
           <div className="task-list">

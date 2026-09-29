@@ -28,6 +28,23 @@ function quickTimes(now = new Date()) {
   ];
 }
 
+/** One-tap examples: { title, time: 'HH:MM', repeat } → form fields (next occurrence of that time) */
+function presetFields(p) {
+  if (!p) return {};
+  const out = {};
+  if (p.title) out.title = p.title;
+  if (p.repeat) out.repeat = p.repeat;
+  if (p.time) {
+    const [h, m] = p.time.split(':').map(Number);
+    const d = new Date();
+    d.setHours(h, m, 0, 0);
+    if (d < new Date()) d.setDate(d.getDate() + 1);
+    out.date = ymd(d);
+    out.time = hm(d);
+  }
+  return out;
+}
+
 function nextHour() {
   const d = new Date(Date.now() + 60 * 60 * 1000);
   d.setMinutes(0, 0, 0);
@@ -48,7 +65,7 @@ function fromReminder(r) {
 }
 
 /** New / edit reminder: say what, tap when, done. */
-export default function ReminderModal({ open, onClose, reminder }) {
+export default function ReminderModal({ open, onClose, reminder, preset }) {
   const { features } = useApp();
   const [f, setF] = useState(fromReminder(null));
   const [showNote, setShowNote] = useState(false);
@@ -58,7 +75,7 @@ export default function ReminderModal({ open, onClose, reminder }) {
 
   useEffect(() => {
     if (!open) return;
-    setF(fromReminder(reminder));
+    setF({ ...fromReminder(reminder), ...(reminder ? {} : presetFields(preset)) });
     setShowNote(Boolean(reminder?.note));
     if (!reminder) setTimeout(() => titleRef.current?.focus(), 120);
   }, [open, reminder]);

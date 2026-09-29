@@ -13,6 +13,7 @@ const UserSchema = new mongoose.Schema(
       timezone: { type: String, default: 'Asia/Kolkata' },
       emailReminders: { type: Boolean, default: true },
       pushReminders: { type: Boolean, default: true },
+      onboarded: { type: Boolean, default: false },
     },
     resetTokenHash: { type: String, select: false },
     resetTokenExpires: { type: Date, select: false },

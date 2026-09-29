@@ -8,6 +8,7 @@ import Reminder from '@/models/Reminder';
 import Transaction from '@/models/Transaction';
 import Budget from '@/models/Budget';
 import Bill from '@/models/Bill';
+import Goal from '@/models/Goal';
 
 const PRIORITY = ['None', 'Low', 'Medium', 'High'];
 const REPEAT = { none: 'Once', daily: 'Every day', weekly: 'Every week', monthly: 'Every month', yearly: 'Every year' };
@@ -18,7 +19,7 @@ export const GET = route(async (req, { userId }) => {
   const tz = Number(new URL(req.url).searchParams.get('tz'));
   const tzOffset = Number.isFinite(tz) && Math.abs(tz) <= 840 ? tz : -330; // default to IST
 
-  const [user, lists, tasks, reminders, transactions, budgets, bills] = await Promise.all([
+  const [user, lists, tasks, reminders, transactions, budgets, bills, goals] = await Promise.all([
     User.findById(userId).lean(),
     List.find({ $or: [{ owner: userId }, { 'members.user': userId }] }).lean(),
     Task.find({ owner: userId }).sort({ done: 1, dueDate: 1 }).lean(),
@@ -26,6 +27,7 @@ export const GET = route(async (req, { userId }) => {
     Transaction.find({ user: userId }).sort({ date: -1 }).lean(),
     Budget.find({ user: userId }).sort({ category: 1 }).lean(),
     Bill.find({ user: userId }).sort({ dueDay: 1 }).lean(),
+    Goal.find({ user: userId }).sort({ createdAt: 1 }).lean(),
   ]);
   const listName = new Map(lists.map((l) => [String(l._id), l.name]));
   const splits = transactions.filter((t) => t.split?.people?.length);
@@ -172,6 +174,18 @@ export const GET = route(async (req, { userId }) => {
         b.autopay,
         b.active,
       ]),
+    },
+    {
+      name: 'Savings goals',
+      columns: [
+        { header: 'Goal', width: 26 },
+        { header: `Target (${currency})`, width: 15, type: 'money' },
+        { header: `Saved (${currency})`, width: 15, type: 'money' },
+        { header: 'Progress', width: 11 },
+        { header: 'Deadline', width: 14, type: 'date' },
+        { header: 'Reached on', width: 14, type: 'date' },
+      ],
+      rows: goals.map((g) => [`${g.emoji || ''} ${g.name}`.trim(), g.target, g.saved, `${Math.min(100, Math.round((g.saved / g.target) * 100))}%`, g.deadline, g.reachedAt]),
     },
     {
       name: 'Lists',

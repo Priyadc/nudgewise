@@ -94,7 +94,7 @@ export async function sendPush(userId, payload) {
  * Deliver a notification to a user on every enabled channel.
  * channels: { inApp, push, email }
  */
-export async function deliver(userId, { title, body = '', url = '/dashboard', type = 'reminder' }, channels = {}) {
+export async function deliver(userId, { title, body = '', url = '/dashboard', type = 'reminder', actions, meta }, channels = {}) {
   const user = await User.findById(userId).lean();
   if (!user) return;
   const prefs = user.settings || {};
@@ -102,7 +102,7 @@ export async function deliver(userId, { title, body = '', url = '/dashboard', ty
 
   if (channels.inApp !== false) jobs.push(Notification.create({ user: userId, title, body, url, type }));
   if (channels.push !== false && prefs.pushReminders !== false) {
-    jobs.push(sendPush(userId, { title, body, url, tag: `${type}-${Date.now()}` }));
+    jobs.push(sendPush(userId, { title, body, url, tag: `${type}-${Date.now()}`, actions, meta }));
   }
   if (channels.email && prefs.emailReminders !== false) {
     jobs.push(

@@ -4,10 +4,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { CalendarCheck, Copy, Hash, Loader2, Plus, Share2, Trash2, UserRound, X, ListChecks, NotebookPen } from 'lucide-react';
 import { toast } from 'sonner';
-import { Drawer, Confirm } from '@/components/ui/Modal';
+import { Drawer } from '@/components/ui/Modal';
 import VoiceButton, { VoiceBar } from '@/components/ui/VoiceButton';
 import Menu from '@/components/ui/Menu';
-import { TaskCheck } from './TaskItem';
+import { TaskCheck, deleteTask } from './TaskItem';
 import { WhenPicker, RemindPicker, PriorityPicker, RepeatPicker, ListPicker } from './Pickers';
 import { api, emit } from '@/lib/client/api';
 import { relativeDay, formatTime } from '@/lib/format';
@@ -45,7 +45,6 @@ export default function TaskDrawer({ task, open, onClose, onChanged, onDeleted }
   const [subInput, setSubInput] = useState('');
   const [interim, setInterim] = useState('');
   const [saving, setSaving] = useState(false);
-  const [confirm, setConfirm] = useState(false);
 
   useEffect(() => {
     if (task) setForm(fromTask(task));
@@ -82,10 +81,10 @@ export default function TaskDrawer({ task, open, onClose, onChanged, onDeleted }
     setSaving(true);
     try {
       const d = await api(`/api/tasks/${task._id}`, { method: 'PATCH', body: { ...payload(), ...extra } });
-      onChanged?.(d.task);
+      if (d.task) onChanged?.(d.task);
       emit('tasks-changed');
       if (d.rescheduled) toast.success('Nice! Next one scheduled', { description: relativeDay(d.task.dueDate) });
-      else toast.success('Saved');
+      else if (!d.offline) toast.success('Saved');
       onClose();
     } catch (err) {
       toast.error(err.message);
@@ -94,17 +93,9 @@ export default function TaskDrawer({ task, open, onClose, onChanged, onDeleted }
     }
   }
 
-  async function remove() {
-    try {
-      await api(`/api/tasks/${task._id}`, { method: 'DELETE' });
-      onDeleted?.(task._id);
-      emit('tasks-changed');
-      toast.success('Task deleted');
-      setConfirm(false);
-      onClose();
-    } catch (err) {
-      toast.error(err.message);
-    }
+  function remove() {
+    onClose();
+    deleteTask(task, onDeleted);
   }
 
   async function share() {
@@ -160,7 +151,7 @@ export default function TaskDrawer({ task, open, onClose, onChanged, onDeleted }
               ]}
             />
             {!readOnly && (
-              <button className="btn btn-ghost btn-icon btn-sm" onClick={() => setConfirm(true)} aria-label="Delete task">
+              <button className="btn btn-ghost btn-icon btn-sm" onClick={remove} aria-label="Delete task">
                 <Trash2 />
               </button>
             )}
@@ -297,7 +288,6 @@ export default function TaskDrawer({ task, open, onClose, onChanged, onDeleted }
           </div>
         )}
       </Drawer>
-      <Confirm open={confirm} onClose={() => setConfirm(false)} onConfirm={remove} title="Delete this task?" message="This also removes its checklist and reminder. This can't be undone." />
     </>
   );
 }

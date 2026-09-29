@@ -28,6 +28,9 @@ import { ActivityBars } from '@/components/finance/Charts';
 import { api, emit, on, todayParams } from '@/lib/client/api';
 import { formatMoney, formatTime, greeting, relativeDay } from '@/lib/format';
 import { ymd } from '@/lib/when';
+import { celebrateDayCleared } from '@/lib/client/celebrate';
+import Examples from '@/components/ui/Examples';
+import { taskExamples, moneyExamples } from '@/lib/client/examples';
 
 const container = { hidden: {}, show: { transition: { staggerChildren: 0.06 } } };
 const item = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } } };
@@ -72,6 +75,7 @@ export default function DashboardPage() {
   async function toggle(task) {
     try {
       await api(`/api/tasks/${task._id}`, { method: 'PATCH', body: { done: !task.done } });
+      if (!task.done && data.tasks.today.length < 8 && !data.tasks.today.some((t) => t._id !== task._id && !t.done)) celebrateDayCleared();
       setData((d) => ({ ...d, tasks: { ...d.tasks, today: d.tasks.today.map((t) => (t._id === task._id ? { ...t, done: !t.done } : t)) } }));
       setTimeout(() => emit('tasks-changed'), 500);
     } catch (err) {
@@ -80,6 +84,25 @@ export default function DashboardPage() {
   }
 
   const money = (v) => formatMoney(v, currency, { compact: v >= 100000 });
+
+  async function payBill(bill) {
+    try {
+      const d = await api(`/api/bills/${bill._id}`, { method: 'POST', body: { action: 'pay' } });
+      toast.success(`${bill.name} marked as paid`, {
+        description: `${formatMoney(bill.amount, currency)} added to your expenses`,
+        action: {
+          label: 'Undo',
+          onClick: async () => {
+            await api(`/api/bills/${bill._id}`, { method: 'POST', body: { action: 'unpay', period: d.paidPeriod } });
+            emit('money-changed');
+          },
+        },
+      });
+      emit('money-changed');
+    } catch (err) {
+      toast.error(err.message);
+    }
+  }
   const first = user?.name?.split(' ')[0] || '';
 
   if (!data) {
@@ -122,6 +145,12 @@ export default function DashboardPage() {
                   : 'A clear day ahead — perfect for getting ahead of the week.'
                 : `${todayOpen} thing${todayOpen > 1 ? 's' : ''} left for today${tasks.overdue ? ` and ${tasks.overdue} catching up from before` : ''}. You've got this.`}
             </p>
+            {data.streak?.count > 0 && (
+              <motion.div className="streak-chip" initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 300, damping: 14, delay: 0.3 }}>
+                <span className="flame">🔥</span> {data.streak.count}-day streak
+                {!data.streak.doneToday && <span className="tiny" style={{ opacity: 0.85 }}> · finish one task today to keep it</span>}
+              </motion.div>
+            )}
             <div className="row row-wrap" style={{ marginTop: 18, gap: 8 }}>
               <button className="btn" style={{ background: '#fff', color: '#1e1b4b' }} onClick={() => openSheet('task', { date: ymd(new Date()) })}>
                 <Plus /> Add task
@@ -178,6 +207,8 @@ export default function DashboardPage() {
         />
       </div>
 
+      <MonthReview data={data.lastMonth} money={money} />
+
       <div className="grid grid-2">
         <motion.section variants={item} className="card card-pad">
           <div className="card-title">
@@ -194,11 +225,11 @@ export default function DashboardPage() {
             </Link>
           </div>
           {tasks.today.length === 0 ? (
-            <EmptyState icon={Sparkles} title="Your day is clear" text="Nothing due today. Plan something, or just breathe." action={<button className="btn btn-soft btn-sm" onClick={() => openSheet('task', { date: ymd(new Date()) })}><Plus /> Add a task</button>} />
+            <EmptyState icon={Sparkles} title="Your day is clear" text="Nothing due today. Plan something, or just breathe." action={<Examples items={taskExamples('today', openSheet)} />} />
           ) : (
             <div className="task-list">
               {tasks.today.map((t) => (
-                <TaskItem key={t._id} task={t} onToggle={toggle} onOpen={setActive} onDeleted={() => load()} />
+                <TaskItem key={t._id} task={t} onToggle={toggle} onOpen={setActive} onDeleted={(id) => setData((d) => ({ ...d, tasks: { ...d.tasks, today: d.tasks.today.filter((t) => t._id !== id) } }))} />
               ))}
             </div>
           )}
@@ -259,7 +290,7 @@ export default function DashboardPage() {
             </Link>
           </div>
           {finance.topCategories.length === 0 ? (
-            <EmptyState icon={Receipt} title="No spending yet this month" action={<button className="btn btn-soft btn-sm" onClick={() => openSheet('money', { type: 'expense' })}><Plus /> Log an expense</button>} />
+            <EmptyState icon={Receipt} title="No spending yet this month" action={<Examples items={moneyExamples(openSheet)} />} />
           ) : (
             <div className="stack">
               {finance.topCategories.map((c) => (
@@ -304,6 +335,13 @@ export default function DashboardPage() {
                   <span className="num bold small" style={{ minWidth: 70, textAlign: 'right' }}>
                     {formatMoney(b.amount, currency)}
                   </span>
+                  {b.autopay ? (
+                    <span className="chip chip-success" title="Logged automatically on the due date">autopay</span>
+                  ) : (
+                    <button className="btn btn-soft btn-sm" onClick={() => payBill(b)} data-tip="Adds it to your expenses">
+                      <CircleCheck /> Paid
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
@@ -311,7 +349,54 @@ export default function DashboardPage() {
         </motion.section>
       </div>
 
-      <TaskDrawer task={active} open={Boolean(active)} onClose={() => setActive(null)} onChanged={() => load()} onDeleted={() => load()} />
+      <TaskDrawer task={active} open={Boolean(active)} onClose={() => setActive(null)} onChanged={() => load()} onDeleted={(id) => setData((d) => ({ ...d, tasks: { ...d.tasks, today: d.tasks.today.filter((t) => t._id !== id) } }))} />
     </motion.div>
+  );
+}
+
+/** Shown for the first 10 days of a month: how last month went */
+function MonthReview({ data, money }) {
+  if (!data || new Date().getDate() > 10 || (!data.expense && !data.income)) return null;
+  const [y, m] = data.key.split('-').map(Number);
+  const name = new Date(y, m - 1, 1).toLocaleDateString(undefined, { month: 'long' });
+  const change = data.previousExpense ? Math.round(((data.expense - data.previousExpense) / data.previousExpense) * 100) : null;
+  const saved = data.income - data.expense;
+  return (
+    <motion.section variants={item} className="card card-pad month-review">
+      <div className="card-title">
+        <h3>📊 Your {name} in review</h3>
+      </div>
+      <div className="grid grid-4" style={{ gap: 12 }}>
+        <div>
+          <div className="tiny muted">You spent</div>
+          <div className="stat-value" style={{ fontSize: 24 }}>{money(data.expense)}</div>
+          {change !== null && (
+            <div className="tiny" style={{ color: change <= 0 ? 'var(--success)' : 'var(--danger)', fontWeight: 700 }}>
+              {change <= 0 ? '↓' : '↑'} {Math.abs(change)}% vs the month before
+            </div>
+          )}
+        </div>
+        <div>
+          <div className="tiny muted">You earned</div>
+          <div className="stat-value" style={{ fontSize: 24 }}>{money(data.income)}</div>
+        </div>
+        <div>
+          <div className="tiny muted">{saved >= 0 ? 'You saved' : 'Overspent by'}</div>
+          <div className="stat-value" style={{ fontSize: 24, color: saved >= 0 ? 'var(--success)' : 'var(--danger)' }}>{money(Math.abs(saved))}</div>
+        </div>
+        {data.topCategory && (
+          <div>
+            <div className="tiny muted">Biggest spend</div>
+            <div className="row" style={{ gap: 8, marginTop: 4 }}>
+              <CategoryIcon name={data.topCategory.category} size={30} />
+              <div>
+                <div className="bold small">{data.topCategory.category}</div>
+                <div className="tiny muted num">{money(data.topCategory.total)}</div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </motion.section>
   );
 }

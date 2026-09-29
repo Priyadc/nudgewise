@@ -25,7 +25,7 @@ export default function TaskModal({ open, onClose, defaults = {} }) {
 
   useEffect(() => {
     if (!open) return;
-    setF({ ...EMPTY, list: defaults.list || '', date: defaults.date || '' });
+    setF({ ...EMPTY, list: defaults.list || '', date: defaults.date || '', time: defaults.time || '', title: defaults.title || '', remind: defaults.remind || 'none', repeat: defaults.repeat || 'none', priority: defaults.priority || 0 });
     setMore(false);
     setSub('');
     setTimeout(() => titleRef.current?.focus(), 120);

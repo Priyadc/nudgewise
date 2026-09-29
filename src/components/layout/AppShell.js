@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useSearchParams, useRouter } from 'next/navigation';
-import { signOut } from 'next-auth/react';
-import { motion } from 'framer-motion';
+import { logout } from '@/lib/client/session';
+import { MotionConfig, motion } from 'framer-motion';
 import {
   Bell,
   CalendarRange,
@@ -18,6 +18,8 @@ import {
   Settings,
   Users,
   Wallet,
+  Search,
+  WifiOff,
 } from 'lucide-react';
 import Logo from '@/components/ui/Logo';
 import ThemeToggle from '@/components/ui/ThemeToggle';
@@ -25,6 +27,11 @@ import { Avatar } from '@/components/ui/Controls';
 import NotificationBell from './NotificationBell';
 import QuickAdd from './QuickAdd';
 import Sheets from './Sheets';
+import SearchPalette from './SearchPalette';
+import Onboarding from './Onboarding';
+import Celebration from '@/components/ui/Celebration';
+import { emit, flushOutbox, on, outboxCount } from '@/lib/client/api';
+import { applyA11y, getA11y } from '@/lib/client/a11y';
 import ListModal from '@/components/tasks/ListModal';
 import { AppProvider, useApp } from './AppContext';
 
@@ -102,7 +109,7 @@ function Sidebar() {
             <div className="tiny faint truncate">{user?.email}</div>
           </div>
           <ThemeToggle className="btn btn-ghost btn-icon btn-sm" />
-          <button className="btn btn-ghost btn-icon btn-sm" onClick={() => signOut({ callbackUrl: '/' })} aria-label="Sign out" data-tip="Sign out">
+          <button className="btn btn-ghost btn-icon btn-sm" onClick={() => logout()} aria-label="Sign out" data-tip="Sign out">
             <LogOut />
           </button>
         </div>
@@ -159,8 +166,12 @@ function Topbar() {
         Pockeazy
       </Link>
       <div className="grow" />
+      <OfflinePill />
+      <button className="btn btn-ghost btn-icon" onClick={() => emit('open-search')} aria-label="Search (/)" data-tip="Search  /" data-tip-pos="bottom">
+        <Search />
+      </button>
       <NotificationBell />
-      <button className="btn btn-ghost btn-icon" onClick={() => signOut({ callbackUrl: '/' })} aria-label="Sign out" data-tip="Sign out" data-tip-pos="bottom">
+      <button className="btn btn-ghost btn-icon" onClick={() => logout()} aria-label="Sign out" data-tip="Sign out" data-tip-pos="bottom">
         <LogOut />
       </button>
       <span className="show-mobile">
@@ -185,13 +196,67 @@ function Shortcuts() {
       }
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
-        openQuickAdd();
+        emit('open-search');
+      }
+      if (e.key === '/' && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        e.preventDefault();
+        emit('open-search');
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [openQuickAdd]);
   return null;
+}
+
+/** "You're offline" pill + sends anything saved offline once we're back */
+function OfflinePill() {
+  const [offline, setOffline] = useState(false);
+  const [pending, setPending] = useState(0);
+  useEffect(() => {
+    const update = () => setOffline(!navigator.onLine);
+    const goOnline = () => {
+      update();
+      flushOutbox();
+    };
+    update();
+    setPending(outboxCount());
+    flushOutbox();
+    window.addEventListener('online', goOnline);
+    window.addEventListener('offline', update);
+    const off = on('outbox-changed', (n) => setPending(n ?? outboxCount()));
+    // Notification buttons (Done / Snooze / Paid) changed something — refresh open pages
+    const onSw = (e) => {
+      if (e.data?.type === 'pockeazy-refresh') ['tasks-changed', 'money-changed', 'reminders-changed'].forEach((n) => emit(n));
+    };
+    navigator.serviceWorker?.addEventListener('message', onSw);
+    return () => {
+      window.removeEventListener('online', goOnline);
+      window.removeEventListener('offline', update);
+      navigator.serviceWorker?.removeEventListener('message', onSw);
+      off();
+    };
+  }, []);
+  if (!offline && !pending) return null;
+  return (
+    <span className="offline-pill" role="status">
+      <WifiOff />
+      {offline ? 'Offline' : 'Syncing'}
+      {pending > 0 && ` · ${pending} to sync`}
+    </span>
+  );
+}
+
+/** Larger text / high contrast / calm mode from Settings → Display */
+function useA11y() {
+  const [calm, setCalm] = useState(false);
+  useEffect(() => {
+    const p = getA11y();
+    applyA11y(p);
+    setCalm(p.calm);
+    return on('a11y-changed', (next) => setCalm(Boolean(next?.calm)));
+  }, []);
+  return calm;
 }
 
 function Fab() {
@@ -214,7 +279,9 @@ function Fab() {
 }
 
 export default function AppShell({ children }) {
+  const calm = useA11y();
   return (
+    <MotionConfig reducedMotion={calm ? 'always' : 'user'}>
     <AppProvider>
       <div className="app-shell">
         <Sidebar />
@@ -228,6 +295,10 @@ export default function AppShell({ children }) {
       <QuickAdd />
       <Sheets />
       <Shortcuts />
+      <SearchPalette />
+      <Onboarding />
+      <Celebration />
     </AppProvider>
+    </MotionConfig>
   );
 }

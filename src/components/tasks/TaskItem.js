@@ -1,11 +1,10 @@
 'use client';
 
-import { forwardRef, useState } from 'react';
+import { forwardRef } from 'react';
 import { motion } from 'framer-motion';
 import { Bell, CalendarDays, Check, ListChecks, Pencil, Repeat, Hash, Trash2 } from 'lucide-react';
-import { toast } from 'sonner';
-import { Confirm } from '@/components/ui/Modal';
 import { api, emit } from '@/lib/client/api';
+import { deleteWithUndo } from '@/lib/client/undo';
 import { formatTime, relativeDay } from '@/lib/format';
 import { Avatar } from '@/components/ui/Controls';
 
@@ -44,22 +43,8 @@ function dueTone(task) {
 
 /** One task in a list. Clicking opens the detail drawer. */
 const TaskItem = forwardRef(function TaskItem({ task, onToggle, onOpen, onDeleted, showList = true, readOnly }, ref) {
-  const [confirm, setConfirm] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-
-  async function remove() {
-    setDeleting(true);
-    try {
-      await api(`/api/tasks/${task._id}`, { method: 'DELETE' });
-      setConfirm(false);
-      onDeleted?.(task._id);
-      emit('tasks-changed');
-      toast.success('Task deleted', { description: task.title });
-    } catch (err) {
-      toast.error(err.message);
-    } finally {
-      setDeleting(false);
-    }
+  function remove() {
+    deleteTask(task, onDeleted);
   }
 
   const subDone = task.subtasks?.filter((s) => s.done).length || 0;
@@ -138,15 +123,28 @@ const TaskItem = forwardRef(function TaskItem({ task, onToggle, onOpen, onDelete
           <button type="button" className="btn btn-ghost btn-icon btn-sm" onClick={() => onOpen(task)} aria-label="Edit task" data-tip="Edit">
             <Pencil />
           </button>
-          <button type="button" className="btn btn-ghost btn-icon btn-sm task-delete" onClick={() => setConfirm(true)} aria-label="Delete task" data-tip="Delete">
+          <button type="button" className="btn btn-ghost btn-icon btn-sm task-delete" onClick={remove} aria-label="Delete task" data-tip="Delete">
             <Trash2 />
           </button>
         </div>
       )}
     </motion.div>
-    <Confirm open={confirm} onClose={() => setConfirm(false)} onConfirm={remove} loading={deleting} title="Delete this task?" message={`“${task.title}” and its reminder will be removed. This can't be undone.`} />
     </>
   );
 });
 
 export default TaskItem;
+
+/** Hide the task now, offer Undo, and delete it for real a few seconds later */
+export function deleteTask(task, onHidden) {
+  deleteWithUndo({
+    label: 'Task deleted',
+    description: task.title,
+    hide: () => onHidden?.(task._id),
+    restore: () => emit('tasks-changed'),
+    commit: async () => {
+      await api(`/api/tasks/${task._id}`, { method: 'DELETE', keepalive: true });
+      emit('lists-changed');
+    },
+  });
+}

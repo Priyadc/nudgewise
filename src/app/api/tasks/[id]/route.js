@@ -42,7 +42,8 @@ export const PATCH = route(async (req, { params, userId }) => {
   }
 
   Object.assign(task, body);
-  if (body.done === true) task.completedAt = new Date();
+  // Rolled-forward recurring tasks still count as "completed today" for streaks
+  if (body.done === true || rescheduled) task.completedAt = new Date();
   if (body.done === false) task.completedAt = null;
   await task.save();
   await syncTaskReminder(task);

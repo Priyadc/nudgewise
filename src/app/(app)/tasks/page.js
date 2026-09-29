@@ -34,6 +34,9 @@ import { api, emit, on, todayParams } from '@/lib/client/api';
 import { parseTask } from '@/lib/nlp';
 import { relativeDay } from '@/lib/format';
 import { ymd } from '@/lib/when';
+import { celebrateDayCleared, isMyDay } from '@/lib/client/celebrate';
+import Examples from '@/components/ui/Examples';
+import { taskExamples } from '@/lib/client/examples';
 
 const VIEWS = {
   today: { title: 'My Day', icon: Sun, sub: 'What needs you today — plus anything that slipped' },
@@ -178,6 +181,8 @@ function TasksPageInner() {
     try {
       const d = await api(`/api/tasks/${task._id}`, { method: 'PATCH', body: { done } });
       emit('lists-changed');
+      // Last thing in My Day ticked off → party time
+      if (done && view === 'today' && !tasks.some((t) => t._id !== task._id && isMyDay(t))) celebrateDayCleared();
       if (d.rescheduled) {
         setTasks((ts) => ts.map((t) => (t._id === task._id ? d.task : t)));
         toast.success('Done! Next one scheduled', { description: relativeDay(d.task.dueDate) });
@@ -417,6 +422,7 @@ function TasksPageInner() {
             icon={view === 'completed' ? CircleCheck : Sparkles}
             title={q ? 'No matches' : (EMPTY[listId ? (view === 'completed' ? 'completed' : 'all') : view] || EMPTY.all).title}
             text={q ? 'Try a different search.' : (EMPTY[listId ? (view === 'completed' ? 'completed' : 'all') : view] || EMPTY.all).text}
+            action={!q && view !== 'completed' && !readOnly && <Examples items={taskExamples(listId ? 'all' : view, openSheet, listId || '')} />}
           />
         ) : (
           <div>

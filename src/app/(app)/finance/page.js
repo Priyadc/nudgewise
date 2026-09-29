@@ -21,6 +21,7 @@ import {
   Pencil,
   CalendarClock,
   Undo2,
+  Trash2,
   UsersRound,
   CreditCard,
   Smartphone,
@@ -32,8 +33,12 @@ import {
 import { toast } from 'sonner';
 import { useApp } from '@/components/layout/AppContext';
 import { SpendingDonut, TrendBars } from '@/components/finance/Charts';
-import { TransactionModal, BudgetModal, BillModal } from '@/components/finance/FinanceModals';
+import { TransactionModal, BudgetModal, BillModal, deleteTransaction } from '@/components/finance/FinanceModals';
 import SplitsPanel from '@/components/finance/SplitsPanel';
+import GoalsPanel from '@/components/finance/Goals';
+import MoneyLock from '@/components/finance/MoneyLock';
+import Examples from '@/components/ui/Examples';
+import { moneyExamples } from '@/lib/client/examples';
 import CategoryIcon from '@/components/ui/CategoryIcon';
 import { AnimatedNumber, EmptyState, Progress, Skeleton, SkeletonList, Tabs } from '@/components/ui/Controls';
 import { api, on } from '@/lib/client/api';
@@ -125,6 +130,14 @@ function FinanceInner() {
     return () => clearTimeout(t);
   }, [load, filter.q]);
   useEffect(() => on('money-changed', load), [load]);
+  // An entry deleted with Undo disappears straight away
+  useEffect(
+    () =>
+      on('money-hide', (id) => {
+        setTxns((ts) => (ts || []).filter((t) => t._id !== id));
+      }),
+    []
+  );
 
   const setTab = (t) => router.push(`/finance${t === 'overview' ? '' : `?tab=${t}`}`);
   const isCurrent = month === monthKey();
@@ -179,6 +192,14 @@ function FinanceInner() {
         </span>
         {t.split && <span className="tiny faint num">of {money(t.split.total)}</span>}
       </span>
+      <div className="task-actions" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+        <button type="button" className="btn btn-ghost btn-icon btn-sm" onClick={() => setTxnModal({ txn: t })} aria-label="Edit entry" data-tip="Edit">
+          <Pencil />
+        </button>
+        <button type="button" className="btn btn-ghost btn-icon btn-sm task-delete" onClick={() => deleteTransaction(t, currency)} aria-label="Delete entry" data-tip="Delete">
+          <Trash2 />
+        </button>
+      </div>
     </motion.div>
   );
 
@@ -222,6 +243,7 @@ function FinanceInner() {
             { value: 'transactions', label: 'Transactions', icon: Receipt, count: txns?.length },
             { value: 'budgets', label: 'Budgets', icon: Target },
             { value: 'splits', label: 'Splits', icon: UsersRound },
+            { value: 'goals', label: 'Goals', icon: PiggyBank },
             { value: 'bills', label: 'Bills', icon: CalendarClock, count: bills?.filter((b) => b.next.status !== 'upcoming' && !b.autopay).length },
           ]}
         />
@@ -240,6 +262,35 @@ function FinanceInner() {
             <motion.div key={tab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.25 }} className="stack stack-lg">
               {tab === 'overview' && (
                 <>
+                  {(bills || []).filter((b) => b.active && !b.autopay && b.next.status !== 'upcoming').length > 0 && (
+                    <section className="card card-pad due-banner">
+                      <div className="card-title">
+                        <h3>
+                          <CalendarClock size={18} /> Due now
+                        </h3>
+                        <span className="tiny muted">Tap Paid and it's added to your expenses</span>
+                      </div>
+                      <div className="stack stack-sm">
+                        {bills
+                          .filter((b) => b.active && !b.autopay && b.next.status !== 'upcoming')
+                          .map((b) => (
+                            <div key={b._id} className="row" style={{ gap: 10 }}>
+                              <CategoryIcon name={b.category} size={34} />
+                              <div className="grow" style={{ minWidth: 0 }}>
+                                <div className="bold small truncate">{b.name}</div>
+                                <div className={`tiny ${b.next.status === 'overdue' ? 'error-text' : 'muted'}`}>
+                                  {b.next.status === 'overdue' ? `Overdue · was due ${relativeDay(b.next.dueDate)}` : `Due ${relativeDay(b.next.dueDate)}`}
+                                </div>
+                              </div>
+                              <span className="num bold small">{money(b.amount)}</span>
+                              <button className="btn btn-primary btn-sm" onClick={() => payBill(b)}>
+                                <CircleCheck /> Paid
+                              </button>
+                            </div>
+                          ))}
+                      </div>
+                    </section>
+                  )}
                   <div className="grid grid-4">
                     {[
                       { icon: TrendingUp, label: 'Income', v: summary.income, tone: 'var(--success)' },
@@ -352,7 +403,7 @@ function FinanceInner() {
                       {txns?.length ? (
                         txns.slice(0, 6).map((t) => <TxnRow key={t._id} t={t} />)
                       ) : (
-                        <EmptyState icon={Receipt} title="No transactions" text="Add your first expense or income for this month." />
+                        <EmptyState icon={Receipt} title="Nothing logged yet" text="Start with something from today — it takes 5 seconds." action={<Examples items={moneyExamples(openSheet)} />} />
                       )}
                     </section>
                   </div>
@@ -392,7 +443,7 @@ function FinanceInner() {
                   {!txns ? (
                     <SkeletonList rows={6} h={56} />
                   ) : grouped.length === 0 ? (
-                    <EmptyState icon={Receipt} title="No transactions found" text="Try another month or filter, or add one with the buttons above." />
+                    <EmptyState icon={Receipt} title="No transactions found" text={filter.q || filter.type || filter.category || filter.method ? 'Try another filter or month.' : 'Nothing logged this month yet.'} action={!(filter.q || filter.type || filter.category || filter.method) && <Examples items={moneyExamples(openSheet)} />} />
                   ) : (
                     <div className="card card-pad" style={{ padding: 12 }}>
                       {grouped.map((g) => (
@@ -457,6 +508,8 @@ function FinanceInner() {
                 </>
               )}
 
+              {tab === 'goals' && <GoalsPanel currency={currency} />}
+
               {tab === 'splits' && <SplitsPanel currency={currency} onSplit={() => openSheet('money', { type: 'expense', split: true })} />}
 
               {tab === 'bills' && (
@@ -516,8 +569,10 @@ function FinanceInner() {
 
 export default function FinancePage() {
   return (
-    <Suspense fallback={<SkeletonList rows={4} />}>
-      <FinanceInner />
-    </Suspense>
+    <MoneyLock>
+      <Suspense fallback={<SkeletonList rows={4} />}>
+        <FinanceInner />
+      </Suspense>
+    </MoneyLock>
   );
 }

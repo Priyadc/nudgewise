@@ -7,7 +7,7 @@ import { Toaster } from 'sonner';
 
 function ThemedToaster() {
   const { resolvedTheme } = useTheme();
-  return <Toaster position="top-center" richColors closeButton theme={resolvedTheme === 'dark' ? 'dark' : 'light'} />;
+  return <Toaster position="bottom-center" offset="24px" richColors closeButton visibleToasts={3} theme={resolvedTheme === 'dark' ? 'dark' : 'light'} />;
 }
 
 function ServiceWorker() {

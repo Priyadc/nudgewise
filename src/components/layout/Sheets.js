@@ -12,8 +12,8 @@ export default function Sheets() {
   return (
     <>
       <TaskModal open={sheet.kind === 'task'} onClose={closeSheet} defaults={p} />
-      <ReminderModal open={sheet.kind === 'reminder'} onClose={closeSheet} reminder={p.reminder} />
-      <TransactionModal open={sheet.kind === 'money'} onClose={closeSheet} txn={p.txn} defaultType={p.type || 'expense'} startSplit={Boolean(p.split)} currency={currency} />
+      <ReminderModal open={sheet.kind === 'reminder'} onClose={closeSheet} reminder={p.reminder} preset={p.preset} />
+      <TransactionModal open={sheet.kind === 'money'} onClose={closeSheet} txn={p.txn} defaultType={p.type || 'expense'} startSplit={Boolean(p.split)} preset={p.preset} currency={currency} />
     </>
   );
 }

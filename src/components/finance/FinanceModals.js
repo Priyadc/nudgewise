@@ -4,7 +4,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Banknote, CalendarDays, CircleDashed, CreditCard, Equal, Landmark, Loader2, Scale, SlidersHorizontal, Smartphone, Trash2, UserPlus, UsersRound, WalletCards, X } from 'lucide-react';
 import { toast } from 'sonner';
-import { Modal, Confirm } from '@/components/ui/Modal';
+import { Modal } from '@/components/ui/Modal';
+import { deleteWithUndo } from '@/lib/client/undo';
+import { guessEntry } from '@/lib/client/guess';
 import { Segmented, Switch } from '@/components/ui/Controls';
 import { ChipGroup, PickLabel } from '@/components/ui/Chips';
 import VoiceButton, { VoiceBar } from '@/components/ui/VoiceButton';
@@ -39,15 +41,32 @@ function splitFromTxn(txn) {
   return { on: true, people, mode: equal ? 'equal' : 'custom', paidBy: s.paidBy || 'me', meSettled: Boolean(s.meSettled) };
 }
 
+/** Hide an entry now, offer Undo, and delete it for real a few seconds later */
+export function deleteTransaction(txn, currency) {
+  deleteWithUndo({
+    label: 'Entry deleted',
+    description: `${txn.note || txn.category} · ${formatMoney(txn.amount, currency)}`,
+    hide: () => emit('money-hide', txn._id),
+    restore: () => emit('money-changed'),
+    commit: async () => {
+      await api(`/api/transactions/${txn._id}`, { method: 'DELETE', keepalive: true });
+      emit('money-changed');
+    },
+  });
+}
+
+// What you usually pick for a note — loaded once per session
+let memoryCache = null;
+
 /** Add / edit a transaction — tap-first, with voice entry, payment method and bill splitting */
-export function TransactionModal({ open, onClose, txn, currency, defaultType = 'expense', startSplit = false }) {
+export function TransactionModal({ open, onClose, txn, currency, defaultType = 'expense', startSplit = false, preset = null }) {
   const [form, setForm] = useState(null);
   const [split, setSplit] = useState(null);
   const [pickingDate, setPickingDate] = useState(false);
   const [friends, setFriends] = useState([]);
   const [saving, setSaving] = useState(false);
-  const [confirm, setConfirm] = useState(false);
   const [interim, setInterim] = useState('');
+  const [memory, setMemory] = useState(memoryCache || []);
 
   useEffect(() => {
     if (!open) return;
@@ -59,11 +78,24 @@ export function TransactionModal({ open, onClose, txn, currency, defaultType = '
       note: txn?.note || '',
       date: toDateInput(txn?.date || new Date()),
       method: txn?.method || 'upi',
+      catTouched: Boolean(txn || preset?.category),
+      methodTouched: Boolean(txn || preset?.method),
+      autoPicked: null,
+      ...(txn ? {} : preset || {}),
     });
     const sp = splitFromTxn(txn);
     if (!txn && startSplit && type === 'expense') sp.on = true;
     setSplit(sp);
     setPickingDate(false);
+    if (!txn && !memoryCache) {
+      api('/api/transactions/memory')
+        .then((d) => {
+          memoryCache = d.memory;
+          setMemory(d.memory);
+        })
+        .catch(() => {});
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, txn, defaultType, startSplit]);
 
   // Names you've split with before, for quick suggestions
@@ -97,6 +129,17 @@ export function TransactionModal({ open, onClose, txn, currency, defaultType = '
   const dayValue = !pickingDate && days.some((d) => d.value === form.date) ? form.date : 'pick';
   const payerOptions = [{ value: 'me', label: 'Me' }, ...shares.people.map((p) => ({ value: p.name.trim(), label: p.name.trim() }))];
   const paidBy = payerOptions.some((o) => o.value.toLowerCase() === split.paidBy.toLowerCase()) ? split.paidBy : 'me';
+
+  function onNote(value) {
+    const patch = { note: value };
+    const g = guessEntry(value, form.type, memory);
+    if (g && !form.catTouched) {
+      patch.category = g.category;
+      patch.autoPicked = g.source;
+    }
+    if (g?.method && !form.methodTouched) patch.method = g.method;
+    set(patch);
+  }
 
   function fromVoice(text) {
     const p = parseTransaction(text);
@@ -164,16 +207,9 @@ export function TransactionModal({ open, onClose, txn, currency, defaultType = '
     }
   }
 
-  async function remove() {
-    try {
-      await api(`/api/transactions/${txn._id}`, { method: 'DELETE' });
-      toast.success('Transaction deleted');
-      emit('money-changed');
-      setConfirm(false);
-      onClose();
-    } catch (err) {
-      toast.error(err.message);
-    }
+  function remove() {
+    onClose();
+    deleteTransaction(txn, currency);
   }
 
   const title = txn ? 'Edit entry' : splitting ? 'Split a bill' : form.type === 'income' ? 'Money in' : 'Money out';
@@ -185,7 +221,7 @@ export function TransactionModal({ open, onClose, txn, currency, defaultType = '
           <div className="row between row-wrap">
             <Segmented
               value={form.type}
-              onChange={(v) => set({ type: v, category: v === 'income' ? 'Salary' : 'Food & Dining' })}
+              onChange={(v) => set({ type: v, category: v === 'income' ? 'Salary' : 'Food & Dining', catTouched: false, autoPicked: null })}
               options={[
                 { value: 'expense', label: 'Spent' },
                 { value: 'income', label: 'Received' },
@@ -213,13 +249,30 @@ export function TransactionModal({ open, onClose, txn, currency, defaultType = '
           </div>
 
           <div className="field">
-            <PickLabel>{form.type === 'income' ? 'What was it?' : 'What for?'}</PickLabel>
-            <CategoryPicker type={form.type} value={form.category} onChange={(name) => set({ category: name })} />
+            <label className="label" htmlFor="t-note">
+              {form.type === 'income' ? 'What was it?' : 'What was it for?'} <span className="faint">(optional)</span>
+            </label>
+            <input id="t-note" className="input" value={form.note} onChange={(e) => onNote(e.target.value)} placeholder={splitting ? 'Dinner at Toit, Goa trip cab…' : form.type === 'income' ? 'Salary, freelance project…' : 'Swiggy, petrol, groceries…'} maxLength={300} />
+          </div>
+
+          <div className="field">
+            <PickLabel
+              aside={
+                form.autoPicked && (
+                  <span className="tiny" style={{ color: 'var(--accent)', fontWeight: 600 }}>
+                    ✨ {form.autoPicked === 'history' ? 'picked from your past entries' : 'picked from the note'}
+                  </span>
+                )
+              }
+            >
+              Category
+            </PickLabel>
+            <CategoryPicker type={form.type} value={form.category} onChange={(name) => set({ category: name, catTouched: true, autoPicked: null })} />
           </div>
 
           <div>
             <PickLabel icon={WalletCards}>{form.type === 'income' ? 'Received via' : 'Paid with'}</PickLabel>
-            <ChipGroup options={METHOD_OPTIONS} value={form.method === 'card' ? 'debit_card' : form.method} onChange={(v) => set({ method: v })} ariaLabel="Payment method" />
+            <ChipGroup options={METHOD_OPTIONS} value={form.method === 'card' ? 'debit_card' : form.method} onChange={(v) => set({ method: v, methodTouched: true })} ariaLabel="Payment method" />
           </div>
 
           <div>
@@ -338,16 +391,9 @@ export function TransactionModal({ open, onClose, txn, currency, defaultType = '
             </div>
           )}
 
-          <div className="field">
-            <label className="label" htmlFor="t-note">
-              Note <span className="faint">(optional)</span>
-            </label>
-            <input id="t-note" className="input" value={form.note} onChange={(e) => set({ note: e.target.value })} placeholder={splitting ? 'Dinner at Toit, Goa trip cab…' : 'What was it for?'} maxLength={300} />
-          </div>
-
           <div className="row between">
             {txn ? (
-              <button type="button" className="btn btn-danger" onClick={() => setConfirm(true)}>
+              <button type="button" className="btn btn-danger" onClick={remove}>
                 <Trash2 /> Delete
               </button>
             ) : (
@@ -364,7 +410,6 @@ export function TransactionModal({ open, onClose, txn, currency, defaultType = '
           </div>
         </form>
       </Modal>
-      <Confirm open={confirm} onClose={() => setConfirm(false)} onConfirm={remove} title="Delete this entry?" message="Your totals, budgets and split balances will update." />
     </>
   );
 }

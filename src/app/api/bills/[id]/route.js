@@ -3,7 +3,8 @@ import { route, ok, readJson, assertId, HttpError } from '@/lib/api';
 import { billSchema } from '@/lib/validators';
 import { nextBillDue } from '@/lib/recurrence';
 import Bill from '@/models/Bill';
-import Transaction from '@/models/Transaction';
+import Transaction, { PAYMENT_METHOD_VALUES } from '@/models/Transaction';
+import { payBill } from '@/lib/bills-server';
 
 async function own(id, userId) {
   assertId(id);
@@ -36,7 +37,7 @@ export const POST = route(async (req, { params, userId }) => {
     .object({
       action: z.enum(['pay', 'unpay']),
       amount: z.coerce.number().min(0).optional(),
-      method: z.enum(['upi', 'card', 'cash', 'bank', 'other']).optional(),
+      method: z.enum(PAYMENT_METHOD_VALUES).optional(),
       period: z.string().max(7).optional(),
     })
     .parse(await readJson(req));
@@ -48,21 +49,6 @@ export const POST = route(async (req, { params, userId }) => {
     return ok({ bill: { ...bill.toObject(), next: nextBillDue(bill) } });
   }
 
-  const due = nextBillDue(bill);
-  if (!bill.paidPeriods.includes(due.period)) bill.paidPeriods.push(due.period);
-  if (bill.paidPeriods.length > 36) bill.paidPeriods = bill.paidPeriods.slice(-36);
-  await bill.save();
-
-  const transaction = await Transaction.create({
-    user: userId,
-    type: 'expense',
-    amount: body.amount ?? bill.amount,
-    category: bill.category || 'Bills & Utilities',
-    note: `${bill.name} · ${due.period}`,
-    method: body.method || 'upi',
-    date: new Date(),
-    bill: bill._id,
-  });
-
-  return ok({ bill: { ...bill.toObject(), next: nextBillDue(bill) }, transaction, paidPeriod: due.period });
+  const { transaction, paidPeriod } = await payBill(bill, { amount: body.amount, method: body.method });
+  return ok({ bill: { ...bill.toObject(), next: nextBillDue(bill) }, transaction, paidPeriod });
 });

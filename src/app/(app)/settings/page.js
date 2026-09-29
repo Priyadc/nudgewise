@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useSession, signOut } from 'next-auth/react';
+import { useSession } from 'next-auth/react';
+import { logout } from '@/lib/client/session';
+import { DisplaySettings, MoneyLockSettings } from '@/components/settings/ComfortSettings';
 import { useTheme } from 'next-themes';
 import { motion } from 'framer-motion';
 import { Bell, Check, Download, Globe, Laptop, Loader2, LogOut, Mail, Monitor, Moon, Palette, Smartphone, Sun, Trash2, UserRound, Coins, ShieldAlert, Tags } from 'lucide-react';
@@ -91,7 +93,7 @@ export default function SettingsPage() {
       await disablePush().catch(() => {});
       await api('/api/user', { method: 'DELETE' });
       toast.success('Your account has been deleted');
-      signOut({ callbackUrl: '/' });
+      logout();
     } catch (err) {
       toast.error(err.message);
       setDeleting(false);
@@ -108,7 +110,7 @@ export default function SettingsPage() {
           <h1>Settings</h1>
           <p>Make Pockeazy yours.</p>
         </div>
-        <button className="btn btn-outline" onClick={() => signOut({ callbackUrl: '/' })}>
+        <button className="btn btn-outline" onClick={() => logout()}>
           <LogOut /> Sign out
         </button>
       </div>
@@ -295,7 +297,10 @@ export default function SettingsPage() {
           )}
         </Section>
 
-        <Section icon={Download} title="Your data" text="Download everything in one Excel file — tasks, reminders, transactions, split bills, budgets and bills, each on its own sheet." delay={0.2}>
+        <DisplaySettings />
+        <MoneyLockSettings />
+
+        <Section icon={Download} title="Your data" text="Download everything in one Excel file — tasks, reminders, transactions, split bills, budgets, bills and savings goals, each on its own sheet." delay={0.2}>
           <button className="btn btn-outline" onClick={() => { window.location.href = `/api/user/export?tz=${new Date().getTimezoneOffset()}`; toast.success('Preparing your Excel file…'); }}>
             <Download /> Download as Excel
           </button>
