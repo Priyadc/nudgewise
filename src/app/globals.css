@@ -2458,3 +2458,16 @@ html.a11y-calm .dancer, html.a11y-calm .dancer * { animation: none !important; }
 .stat-go svg { width: 18px; height: 18px; }
 .stat-link:hover .stat-go, .stat-link:focus-visible .stat-go { opacity: 1; transform: none; color: var(--accent); }
 .back-link { margin: -6px 0 10px -8px; }
+
+/* Panda + friend dancing together */
+.dance-floor.duo { width: 290px; height: 190px; display: flex; justify-content: center; align-items: flex-end; gap: 6px; }
+.dancer-slot { position: relative; width: 140px; height: 180px; }
+.dancer-slot.friend { width: 120px; height: 155px; }
+.dancer-slot.friend .dancer,
+.dancer-slot.friend .dancer * { animation-delay: -0.23s; }
+.dancer-slot .floor-shadow { width: 76px; margin-left: -38px; }
+@media (max-width: 380px) {
+  .dance-floor.duo { width: 250px; }
+  .dancer-slot { width: 122px; height: 160px; }
+  .dancer-slot.friend { width: 104px; height: 136px; }
+}

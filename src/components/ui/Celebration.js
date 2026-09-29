@@ -94,8 +94,9 @@ export default function Celebration() {
   useEffect(
     () =>
       on('celebrate', (detail) => {
-        const kinds = Object.keys(ANIMALS);
-        setShow({ ...detail, animal: detail?.animal || kinds[Math.floor(Math.random() * kinds.length)], key: Date.now() });
+        // The panda always dances, with a kitten or bunny friend
+        const friends = ['kitten', 'bunny'];
+        setShow({ ...detail, friend: detail?.friend || friends[Math.floor(Math.random() * friends.length)], key: Date.now() });
       }),
     []
   );
@@ -156,12 +157,18 @@ export default function Celebration() {
             transition={{ type: 'spring', stiffness: 320, damping: 16 }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="dance-floor">
+            <div className="dance-floor duo">
               <span className="note n1">♪</span>
               <span className="note n2">♫</span>
               <span className="note n3">✦</span>
-              <Dancer kind={show.animal} />
-              <span className="floor-shadow" />
+              <div className="dancer-slot lead">
+                <Dancer kind="panda" />
+                <span className="floor-shadow" />
+              </div>
+              <div className="dancer-slot friend">
+                <Dancer kind={show.friend} />
+                <span className="floor-shadow" />
+              </div>
             </div>
             <h2>{show.title || 'Yay! 🎉'}</h2>
             {show.sub && <p>{show.sub}</p>}
