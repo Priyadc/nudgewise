@@ -2451,3 +2451,10 @@ html.a11y-calm .dancer, html.a11y-calm .dancer * { animation: none !important; }
 /* Offline pill in the top bar */
 .offline-pill { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 99px; font-size: 12.5px; font-weight: 700; background: var(--warning-soft); color: oklch(0.45 0.12 70); }
 .offline-pill svg { width: 14px; height: 14px; }
+
+/* Clickable stat cards on the dashboard */
+.stat-link { display: block; position: relative; color: inherit; text-decoration: none; height: 100%; }
+.stat-go { position: absolute; top: 16px; right: 16px; color: var(--text-3); opacity: 0; transform: translateX(-4px); transition: opacity 0.2s, transform 0.2s var(--ease); }
+.stat-go svg { width: 18px; height: 18px; }
+.stat-link:hover .stat-go, .stat-link:focus-visible .stat-go { opacity: 1; transform: none; color: var(--accent); }
+.back-link { margin: -6px 0 10px -8px; }

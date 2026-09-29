@@ -35,9 +35,9 @@ import { taskExamples, moneyExamples } from '@/lib/client/examples';
 const container = { hidden: {}, show: { transition: { staggerChildren: 0.06 } } };
 const item = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } } };
 
-function StatCard({ icon: Icon, label, value, sub, tone, format }) {
-  return (
-    <motion.div variants={item} className="card stat card-hover">
+function StatCard({ icon: Icon, label, value, sub, tone, format, href, hint }) {
+  const body = (
+    <>
       <div className="stat-label">
         <span className="stat-icon" style={tone ? { background: `color-mix(in oklch, ${tone}, transparent 86%)`, color: tone } : undefined}>
           <Icon />
@@ -48,6 +48,23 @@ function StatCard({ icon: Icon, label, value, sub, tone, format }) {
         <AnimatedNumber value={value} format={format} />
       </div>
       {sub && <div className="stat-sub">{sub}</div>}
+      {href && (
+        <span className="stat-go" aria-hidden="true">
+          <ArrowRight />
+        </span>
+      )}
+    </>
+  );
+  if (!href) return (
+    <motion.div variants={item} className="card stat card-hover">
+      {body}
+    </motion.div>
+  );
+  return (
+    <motion.div variants={item}>
+      <Link href={href} className="card stat card-hover stat-link" aria-label={hint || label}>
+        {body}
+      </Link>
     </motion.div>
   );
 }
@@ -194,9 +211,9 @@ export default function DashboardPage() {
       </motion.section>
 
       <div className="grid grid-4">
-        <StatCard icon={CircleCheck} label="Open tasks" value={tasks.totalOpen} sub={`${tasks.doneToday} done today`} />
-        <StatCard icon={Flame} label="Done this week" value={tasks.completedWeek} sub="Last 7 days" tone="var(--warning)" />
-        <StatCard icon={TrendingUp} label="Income" value={finance.income} format={money} sub="This month" tone="var(--success)" />
+        <StatCard icon={CircleCheck} label="Open tasks" value={tasks.totalOpen} sub={`${tasks.doneToday} done today`} href="/tasks?ref=dashboard" hint="See all open tasks" />
+        <StatCard icon={Flame} label="Done this week" value={tasks.completedWeek} sub="Last 7 days" tone="var(--warning)" href="/tasks?view=completed&ref=dashboard" hint="See completed tasks" />
+        <StatCard icon={TrendingUp} label="Income" value={finance.income} format={money} sub="This month" tone="var(--success)" href="/finance?tab=transactions&ref=dashboard" hint="See this month's transactions" />
         <StatCard
           icon={TrendingDown}
           label="Spent"
@@ -204,6 +221,8 @@ export default function DashboardPage() {
           format={money}
           sub={budgetPct !== null ? `${budgetPct}% of budget` : 'This month'}
           tone={budgetPct >= 100 ? 'var(--danger)' : 'var(--info)'}
+          href="/finance?ref=dashboard"
+          hint="See where your money went"
         />
       </div>
 

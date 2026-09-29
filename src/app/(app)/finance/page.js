@@ -29,6 +29,7 @@ import {
   Banknote,
   Landmark,
   CircleDashed,
+  ArrowLeft,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useApp } from '@/components/layout/AppContext';
@@ -205,6 +206,11 @@ function FinanceInner() {
 
   return (
     <>
+      {sp.get('ref') === 'dashboard' && (
+        <motion.button initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} className="btn btn-ghost btn-sm back-link" onClick={() => (window.history.length > 1 ? router.back() : router.push('/dashboard'))}>
+          <ArrowLeft /> Back to dashboard
+        </motion.button>
+      )}
       <div className="page-header">
         <div>
           <h1>Money</h1>
