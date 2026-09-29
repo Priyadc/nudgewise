@@ -1,9 +1,9 @@
 /* Pockeazy service worker — push notifications + offline fallback page */
-const CACHE = 'pockeazy-v1';
+const CACHE = 'pockeazy-v2';
 const OFFLINE_URL = '/offline.html';
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE).then((c) => c.addAll([OFFLINE_URL, '/icon.svg'])).then(() => self.skipWaiting()));
+  event.waitUntil(caches.open(CACHE).then((c) => c.addAll([OFFLINE_URL])).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', (event) => {

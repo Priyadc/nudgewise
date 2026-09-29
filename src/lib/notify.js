@@ -40,7 +40,7 @@ export function emailTemplate({ heading, body, ctaLabel, ctaUrl }) {
   return `<!doctype html><html><body style="margin:0;background:#f5f3ff;font-family:Segoe UI,Roboto,Arial,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="padding:32px 12px;"><tr><td align="center">
   <table width="100%" style="max-width:520px;background:#ffffff;border-radius:18px;overflow:hidden;box-shadow:0 8px 30px rgba(76,29,149,.12);">
-    <tr><td style="background:linear-gradient(135deg,#7c3aed,#ec4899);padding:22px 28px;color:#fff;font-size:20px;font-weight:700;">◉ Pockeazy</td></tr>
+    <tr><td style="background:linear-gradient(135deg,#7c3aed,#ec4899);padding:22px 28px;color:#fff;font-size:20px;font-weight:700;"><img src="${appUrl()}/icons/icon-192.png" width="28" height="28" alt="" style="vertical-align:middle;border-radius:8px;margin-right:8px;border:0;"> Pockeazy</td></tr>
     <tr><td style="padding:28px;">
       <h1 style="margin:0 0 12px;font-size:20px;color:#1e1b4b;">${escapeHtml(heading)}</h1>
       <p style="margin:0 0 22px;color:#4b5563;line-height:1.6;font-size:15px;">${escapeHtml(body)}</p>

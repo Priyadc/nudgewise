@@ -12,7 +12,7 @@ export const metadata = {
     'Pockeazy brings your to-dos, reminders, bills and spending into one beautiful app. Voice input, photo attachments, shared lists and dark mode.',
   applicationName: 'Pockeazy',
   manifest: '/manifest.json',
-  icons: { icon: '/icon.svg', apple: '/icons/icon-192.png' },
+  icons: { icon: '/icon.svg?v=2', apple: '/icons/apple-touch-icon.png?v=2' },
   appleWebApp: { capable: true, title: 'Pockeazy', statusBarStyle: 'black-translucent' },
 };
 

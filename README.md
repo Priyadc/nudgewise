@@ -1,4 +1,4 @@
-# ◉ Pockeazy — tasks, reminders & money in one app
+# Pockeazy — tasks, reminders & money in one app
 
 Pockeazy is a full-stack productivity app: to-do lists, reminders, bills and expense tracking,
 with voice input, photo attachments, shared lists, push notifications, and light/dark themes.
