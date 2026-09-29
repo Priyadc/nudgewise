@@ -2279,3 +2279,17 @@ button.chip {
     opacity: 1;
   }
 }
+
+/* Anything that can't be edited shows the "not allowed" cursor on hover */
+.input:disabled,
+.select:disabled,
+.textarea:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled,
+button:disabled {
+  cursor: not-allowed;
+}
+.input-wrap:has(.input:disabled) {
+  cursor: not-allowed;
+}

@@ -148,9 +148,9 @@ export default function SettingsPage() {
                 <span className="label">Email</span>
                 <div className="input-wrap">
                   <Mail />
-                  <input className="input" value={user.email} disabled />
+                  <input className="input" value={user.email} disabled readOnly title="Your email can't be changed" aria-describedby="email-hint" />
                 </div>
-                <span className="hint">Signed in with {user.provider === 'google' ? 'Google' : 'email & password'}.</span>
+                <span className="hint" id="email-hint">Your email can't be changed · signed in with {user.provider === 'google' ? 'Google' : 'email & password'}.</span>
               </div>
             </div>
           </div>
