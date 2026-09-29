@@ -21,15 +21,26 @@ import {
   Pencil,
   CalendarClock,
   Undo2,
+  UsersRound,
+  CreditCard,
+  Smartphone,
+  WalletCards,
+  Banknote,
+  Landmark,
+  CircleDashed,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useApp } from '@/components/layout/AppContext';
 import { SpendingDonut, TrendBars } from '@/components/finance/Charts';
 import { TransactionModal, BudgetModal, BillModal } from '@/components/finance/FinanceModals';
+import SplitsPanel from '@/components/finance/SplitsPanel';
 import CategoryIcon from '@/components/ui/CategoryIcon';
 import { AnimatedNumber, EmptyState, Progress, Skeleton, SkeletonList, Tabs } from '@/components/ui/Controls';
 import { api, on } from '@/lib/client/api';
-import { getCategories } from '@/lib/categories';
+import { getCategories, methodLabel, PAYMENT_METHODS } from '@/lib/categories';
+
+const METHOD_ICONS = { Smartphone, CreditCard, WalletCards, Banknote, Landmark, CircleDashed, card: WalletCards };
+const methodIcon = (v) => METHOD_ICONS[PAYMENT_METHODS.find((m) => m.value === v)?.icon] || (v === 'card' ? WalletCards : CircleDashed);
 import { formatMoney, relativeDay } from '@/lib/format';
 
 function monthKey(d = new Date()) {
@@ -45,9 +56,9 @@ function monthLabel(key) {
 }
 
 function exportCsv(rows, month) {
-  const header = ['Date', 'Type', 'Category', 'Amount', 'Method', 'Note'];
+  const header = ['Date', 'Type', 'Category', 'My amount', 'Paid with', 'Split total', 'Split with', 'Note'];
   const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
-  const csv = [header, ...rows.map((t) => [new Date(t.date).toLocaleDateString('en-CA'), t.type, t.category, t.amount, t.method, t.note])]
+  const csv = [header, ...rows.map((t) => [new Date(t.date).toLocaleDateString('en-CA'), t.type, t.category, t.amount, methodLabel(t.method), t.split?.total ?? '', (t.split?.people || []).map((p) => `${p.name} ${p.share}`).join('; '), t.note])]
     .map((r) => r.map(esc).join(','))
     .join('\n');
   const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
@@ -62,12 +73,12 @@ function FinanceInner() {
   const router = useRouter();
   const sp = useSearchParams();
   const tab = sp.get('tab') || 'overview';
-  const { currency } = useApp();
+  const { currency, openSheet } = useApp();
   const [month, setMonth] = useState(monthKey());
   const [summary, setSummary] = useState(null);
   const [txns, setTxns] = useState(null);
   const [bills, setBills] = useState(null);
-  const [filter, setFilter] = useState({ type: '', category: '', q: '' });
+  const [filter, setFilter] = useState({ type: '', category: '', q: '', method: '' });
   const [txnModal, setTxnModal] = useState(null); // { txn?, type }
   const [budgetModal, setBudgetModal] = useState(null);
   const [billModal, setBillModal] = useState(null);
@@ -81,6 +92,7 @@ function FinanceInner() {
     if (filter.type) tq.set('type', filter.type);
     if (filter.category) tq.set('category', filter.category);
     if (filter.q) tq.set('q', filter.q);
+    if (filter.method) tq.set('method', filter.method);
     try {
       const [s, t, b] = await Promise.all([api(`/api/finance/summary?${qs}`), api(`/api/transactions?${tq}`), api('/api/bills')]);
       setSummary(s);
@@ -139,13 +151,16 @@ function FinanceInner() {
       <div className="grow" style={{ minWidth: 0 }}>
         <div className="bold small truncate">{t.note || t.category}</div>
         <div className="tiny faint truncate">
-          {t.category} · {t.method.toUpperCase()}
-          {t.receipt?.url ? ' · 🧾' : ''}
+          {t.category} · {methodLabel(t.method)}
+          {t.split ? (t.split.paidBy === 'me' ? ` · split with ${t.split.people.map((p) => p.name).join(', ')}` : ` · ${t.split.paidBy} paid`) : ''}
         </div>
       </div>
-      <span className={`num bold ${t.type === 'income' ? 'amount-income' : 'amount-expense'}`}>
-        {t.type === 'income' ? '+' : '−'}
-        {money(t.amount)}
+      <span className="stack" style={{ gap: 0, alignItems: 'flex-end' }}>
+        <span className={`num bold ${t.type === 'income' ? 'amount-income' : 'amount-expense'}`}>
+          {t.type === 'income' ? '+' : '−'}
+          {money(t.amount)}
+        </span>
+        {t.split && <span className="tiny faint num">of {money(t.split.total)}</span>}
       </span>
     </motion.div>
   );
@@ -155,7 +170,7 @@ function FinanceInner() {
       <div className="page-header">
         <div>
           <h1>Money</h1>
-          <p>Track spending, stay within budget and never miss a bill.</p>
+          <p>Know where every rupee goes — and who still owes you.</p>
         </div>
         <div className="row row-wrap">
           <div className="row card" style={{ padding: 4, gap: 2, borderRadius: 14 }}>
@@ -169,11 +184,14 @@ function FinanceInner() {
               <ChevronRight />
             </button>
           </div>
-          <button className="btn btn-soft" onClick={() => setTxnModal({ type: 'income' })}>
-            <Plus /> Income
+          <button className="btn btn-soft" onClick={() => openSheet('money', { type: 'income' })}>
+            <Plus /> Received
           </button>
-          <button className="btn btn-primary" onClick={() => setTxnModal({ type: 'expense' })}>
-            <Minus /> Expense
+          <button className="btn btn-soft" onClick={() => openSheet('money', { type: 'expense', split: true })}>
+            <UsersRound /> Split
+          </button>
+          <button className="btn btn-primary" onClick={() => openSheet('money', { type: 'expense' })}>
+            <Minus /> Spent
           </button>
         </div>
       </div>
@@ -186,6 +204,7 @@ function FinanceInner() {
             { value: 'overview', label: 'Overview', icon: LayoutGrid },
             { value: 'transactions', label: 'Transactions', icon: Receipt, count: txns?.length },
             { value: 'budgets', label: 'Budgets', icon: Target },
+            { value: 'splits', label: 'Splits', icon: UsersRound },
             { value: 'bills', label: 'Bills', icon: CalendarClock, count: bills?.filter((b) => b.next.status !== 'upcoming' && !b.autopay).length },
           ]}
         />
@@ -240,6 +259,39 @@ function FinanceInner() {
                       <TrendBars data={summary.trend} currency={currency} />
                     </section>
                   </div>
+
+                  {summary.byMethod?.length > 0 && (
+                    <section className="card card-pad">
+                      <div className="card-title">
+                        <h3>
+                          <WalletCards size={18} /> How you paid
+                        </h3>
+                        <span className="tiny faint">spending this month</span>
+                      </div>
+                      <div className="grid grid-3" style={{ gap: 12 }}>
+                        {[...summary.byMethod]
+                          .sort((a, b) => b.total - a.total)
+                          .map((m) => {
+                            const Icon = methodIcon(m.method);
+                            return (
+                              <div key={m.method} className="row" style={{ gap: 10, cursor: 'pointer' }} onClick={() => { setFilter((f) => ({ ...f, type: 'expense', method: m.method })); setTab('transactions'); }}>
+                                <span className="stat-icon" style={m.method === 'credit_card' ? { background: 'color-mix(in oklch, var(--warning), transparent 86%)', color: 'var(--warning)' } : undefined}>
+                                  <Icon />
+                                </span>
+                                <div className="grow" style={{ minWidth: 0 }}>
+                                  <div className="row between small">
+                                    <span className="bold">{methodLabel(m.method)}</span>
+                                    <span className="num bold">{money(m.total)}</span>
+                                  </div>
+                                  <Progress value={m.total} max={summary.expense || 1} tone="plain" />
+                                  <div className="tiny faint">{m.count} payment{m.count > 1 ? 's' : ''}{m.method === 'credit_card' ? ' · due on your card bill' : ''}</div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                      </div>
+                    </section>
+                  )}
 
                   <div className="grid grid-2">
                     <section className="card card-pad">
@@ -306,6 +358,14 @@ function FinanceInner() {
                       <option value="">All categories</option>
                       {(filter.type ? getCategories(filter.type) : [...getCategories('expense'), ...getCategories('income')]).map((c) => (
                         <option key={c.name + c.icon}>{c.name}</option>
+                      ))}
+                    </select>
+                    <select className="select" value={filter.method} onChange={(e) => setFilter((f) => ({ ...f, method: e.target.value }))} style={{ width: 160, height: 40 }} aria-label="Paid with">
+                      <option value="">Any payment</option>
+                      {PAYMENT_METHODS.map((m) => (
+                        <option key={m.value} value={m.value}>
+                          {m.label}
+                        </option>
                       ))}
                     </select>
                     <button className="btn btn-outline" onClick={() => exportCsv(txns || [], month)} disabled={!txns?.length}>
@@ -379,6 +439,8 @@ function FinanceInner() {
                   )}
                 </>
               )}
+
+              {tab === 'splits' && <SplitsPanel currency={currency} onSplit={() => openSheet('money', { type: 'expense', split: true })} />}
 
               {tab === 'bills' && (
                 <>

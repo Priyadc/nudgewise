@@ -6,7 +6,6 @@ import { motion } from 'framer-motion';
 import {
   ArrowRight,
   Bell,
-  CalendarDays,
   CircleCheck,
   Flame,
   Plus,
@@ -16,6 +15,8 @@ import {
   TriangleAlert,
   Wallet,
   Sparkles,
+  Sun,
+  UsersRound,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useApp } from '@/components/layout/AppContext';
@@ -26,6 +27,7 @@ import { AnimatedNumber, EmptyState, Progress, Skeleton } from '@/components/ui/
 import { ActivityBars } from '@/components/finance/Charts';
 import { api, emit, on, todayParams } from '@/lib/client/api';
 import { formatMoney, formatTime, greeting, relativeDay } from '@/lib/format';
+import { ymd } from '@/lib/when';
 
 const container = { hidden: {}, show: { transition: { staggerChildren: 0.06 } } };
 const item = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } } };
@@ -48,7 +50,7 @@ function StatCard({ icon: Icon, label, value, sub, tone, format }) {
 }
 
 export default function DashboardPage() {
-  const { user, currency, openQuickAdd } = useApp();
+  const { user, currency, openSheet } = useApp();
   const [data, setData] = useState(null);
   const [active, setActive] = useState(null);
 
@@ -116,16 +118,22 @@ export default function DashboardPage() {
             <p className="muted">
               {todayOpen === 0
                 ? tasks.doneToday
-                  ? 'You cleared everything due today. Enjoy it!'
-                  : 'Nothing due today — a great time to plan ahead.'
-                : `You have ${todayOpen} task${todayOpen > 1 ? 's' : ''} to go today${tasks.overdue ? `, ${tasks.overdue} overdue` : ''}.`}
+                  ? 'Everything for today is ticked off. Go enjoy your evening.'
+                  : 'A clear day ahead — perfect for getting ahead of the week.'
+                : `${todayOpen} thing${todayOpen > 1 ? 's' : ''} left for today${tasks.overdue ? ` and ${tasks.overdue} catching up from before` : ''}. You've got this.`}
             </p>
             <div className="row row-wrap" style={{ marginTop: 18, gap: 8 }}>
-              <button className="btn" style={{ background: '#fff', color: '#1e1b4b' }} onClick={() => openQuickAdd('task')}>
+              <button className="btn" style={{ background: '#fff', color: '#1e1b4b' }} onClick={() => openSheet('task', { date: ymd(new Date()) })}>
                 <Plus /> Add task
               </button>
-              <button className="btn" style={{ background: 'rgba(255,255,255,.18)', color: '#fff' }} onClick={() => openQuickAdd('expense')}>
-                <Receipt /> Log expense
+              <button className="btn" style={{ background: 'rgba(255,255,255,.18)', color: '#fff' }} onClick={() => openSheet('reminder')}>
+                <Bell /> Remind me
+              </button>
+              <button className="btn" style={{ background: 'rgba(255,255,255,.18)', color: '#fff' }} onClick={() => openSheet('money', { type: 'expense' })}>
+                <Receipt /> Log spend
+              </button>
+              <button className="btn" style={{ background: 'rgba(255,255,255,.18)', color: '#fff' }} onClick={() => openSheet('money', { type: 'expense', split: true })}>
+                <UsersRound /> Split a bill
               </button>
             </div>
           </div>
@@ -174,7 +182,7 @@ export default function DashboardPage() {
         <motion.section variants={item} className="card card-pad">
           <div className="card-title">
             <h3>
-              <CalendarDays size={18} /> Today
+              <Sun size={18} /> My Day
               {tasks.overdue > 0 && (
                 <span className="chip chip-danger">
                   <TriangleAlert /> {tasks.overdue} overdue
@@ -186,7 +194,7 @@ export default function DashboardPage() {
             </Link>
           </div>
           {tasks.today.length === 0 ? (
-            <EmptyState icon={Sparkles} title="Nothing due today" text="Enjoy the calm, or plan something new." action={<button className="btn btn-soft btn-sm" onClick={() => openQuickAdd('task')}><Plus /> Add a task</button>} />
+            <EmptyState icon={Sparkles} title="Your day is clear" text="Nothing due today. Plan something, or just breathe." action={<button className="btn btn-soft btn-sm" onClick={() => openSheet('task', { date: ymd(new Date()) })}><Plus /> Add a task</button>} />
           ) : (
             <div className="task-list">
               {tasks.today.map((t) => (
@@ -200,14 +208,14 @@ export default function DashboardPage() {
           <motion.section variants={item} className="card card-pad">
             <div className="card-title">
               <h3>
-                <Bell size={18} /> Upcoming reminders
+                <Bell size={18} /> Next reminders
               </h3>
               <Link href="/reminders" className="btn btn-ghost btn-sm">
                 All <ArrowRight />
               </Link>
             </div>
             {reminders.length === 0 ? (
-              <p className="muted small">No reminders scheduled. <button className="btn btn-ghost btn-sm" onClick={() => openQuickAdd('reminder')}>Set one</button></p>
+              <p className="muted small">Nothing scheduled. <button className="btn btn-ghost btn-sm" onClick={() => openSheet('reminder')}>Set a reminder</button></p>
             ) : (
               <div className="stack stack-sm">
                 {reminders.map((r) => (
@@ -251,7 +259,7 @@ export default function DashboardPage() {
             </Link>
           </div>
           {finance.topCategories.length === 0 ? (
-            <EmptyState icon={Receipt} title="No spending yet this month" action={<button className="btn btn-soft btn-sm" onClick={() => openQuickAdd('expense')}><Plus /> Log an expense</button>} />
+            <EmptyState icon={Receipt} title="No spending yet this month" action={<button className="btn btn-soft btn-sm" onClick={() => openSheet('money', { type: 'expense' })}><Plus /> Log an expense</button>} />
           ) : (
             <div className="stack">
               {finance.topCategories.map((c) => (

@@ -4,10 +4,9 @@ import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  CalendarDays,
   CalendarRange,
   CircleCheck,
-  Inbox,
+  FolderOpen,
   ListTodo,
   Loader2,
   LogOut,
@@ -19,6 +18,7 @@ import {
   Trash2,
   TriangleAlert,
   Sparkles,
+  Sun,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import TaskItem from '@/components/tasks/TaskItem';
@@ -33,14 +33,35 @@ import { useApp } from '@/components/layout/AppContext';
 import { api, emit, on, todayParams } from '@/lib/client/api';
 import { parseTask } from '@/lib/nlp';
 import { relativeDay } from '@/lib/format';
+import { ymd } from '@/lib/when';
 
 const VIEWS = {
-  today: { title: 'Today', icon: CalendarDays, sub: 'Due today and overdue' },
-  upcoming: { title: 'Upcoming', icon: CalendarRange, sub: 'Planned for later' },
-  all: { title: 'All tasks', icon: ListTodo, sub: 'Everything still open' },
-  completed: { title: 'Completed', icon: CircleCheck, sub: 'Nice work 🎉' },
-  inbox: { title: 'Inbox', icon: Inbox, sub: 'Tasks without a list' },
+  today: { title: 'My Day', icon: Sun, sub: 'What needs you today — plus anything that slipped' },
+  upcoming: { title: 'Coming Up', icon: CalendarRange, sub: 'Everything planned for the days ahead' },
+  all: { title: 'All tasks', icon: ListTodo, sub: 'Every open task, in one place' },
+  completed: { title: 'Done', icon: CircleCheck, sub: 'Look at everything you finished 🎉' },
+  inbox: { title: 'No list', icon: FolderOpen, sub: 'Tasks that are not in a list yet' },
 };
+
+const EMPTY = {
+  today: { title: 'Your day is clear', text: 'Nothing due today. Enjoy it — or plan something below.' },
+  upcoming: { title: 'Nothing planned yet', text: 'Give a task a date and it will line up here.' },
+  all: { title: 'All clear!', text: 'Add a task above, or press N anywhere.' },
+  completed: { title: 'Nothing finished yet', text: 'Tick off a task and it will show up here.' },
+  inbox: { title: 'Nothing here', text: 'Every task is in a list.' },
+};
+
+function daySummary(tasks) {
+  const start = new Date();
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(start.getTime() + 86400000);
+  const open = tasks.filter((t) => !t.done && t.dueDate);
+  const today = open.filter((t) => new Date(t.dueDate) >= start && new Date(t.dueDate) < end).length;
+  const h = new Date().getHours();
+  const hello = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+  if (!today) return `${hello} — nothing else due today`;
+  return `${hello} — ${today} thing${today > 1 ? 's' : ''} to do today`;
+}
 
 function groupTasks(tasks, view) {
   if (view === 'completed') return [{ key: 'done', title: null, items: tasks }];
@@ -81,7 +102,7 @@ function TasksPageInner() {
   const listId = sp.get('list');
   const openTaskId = sp.get('task');
   const [view, setView] = useState(sp.get('view') || 'all');
-  const { lists, setLists } = useApp();
+  const { lists, setLists, openSheet } = useApp();
   const list = lists.find((l) => l._id === listId);
   const readOnly = list?.role === 'viewer';
 
@@ -235,7 +256,7 @@ function TasksPageInner() {
           <div>
             <h1>{list ? list.name : meta.title}</h1>
             <p>
-              {list ? (list.shared ? `Shared · you are ${list.role}` : 'Personal list') : meta.sub}
+              {list ? (list.shared ? `Shared · you are ${list.role}` : 'Personal list') : view === 'today' && !loading ? daySummary(tasks) : meta.sub}
               {overdueCount > 0 && view !== 'completed' && (
                 <span className="chip chip-danger" style={{ marginLeft: 8 }}>
                   <TriangleAlert /> {overdueCount} overdue
@@ -244,6 +265,12 @@ function TasksPageInner() {
             </p>
           </div>
         </div>
+        <div className="row">
+          {!readOnly && view !== 'completed' && (
+            <button className="btn btn-primary" onClick={() => openSheet('task', { list: listId || '', date: view === 'today' ? ymd(new Date()) : '' })}>
+              <Plus /> New task
+            </button>
+          )}
         {list && (
           <div className="row">
             {list.shared && (
@@ -274,6 +301,7 @@ function TasksPageInner() {
             />
           </div>
         )}
+        </div>
       </div>
 
       <div className="stack stack-lg">
@@ -282,11 +310,10 @@ function TasksPageInner() {
             value={view}
             onChange={(v) => router.push(`/tasks${v === 'all' ? '' : `?view=${v}`}`)}
             tabs={[
-              { value: 'today', label: 'Today', icon: CalendarDays },
-              { value: 'upcoming', label: 'Upcoming', icon: CalendarRange },
+              { value: 'today', label: 'My Day', icon: Sun },
+              { value: 'upcoming', label: 'Coming Up', icon: CalendarRange },
               { value: 'all', label: 'All', icon: ListTodo },
-              { value: 'inbox', label: 'Inbox', icon: Inbox },
-              { value: 'completed', label: 'Completed', icon: CircleCheck },
+              { value: 'completed', label: 'Done', icon: CircleCheck },
             ]}
           />
         ) : (
@@ -295,7 +322,7 @@ function TasksPageInner() {
             onChange={(v) => router.push(`/tasks?list=${listId}${v === 'completed' ? '&view=completed' : ''}`)}
             tabs={[
               { value: 'all', label: 'Open', icon: ListTodo, count: list?.pending },
-              { value: 'completed', label: 'Completed', icon: CircleCheck },
+              { value: 'completed', label: 'Done', icon: CircleCheck },
             ]}
           />
         )}
@@ -307,7 +334,7 @@ function TasksPageInner() {
               <input
                 value={text}
                 onChange={(e) => setText(e.target.value)}
-                placeholder={`Add a task${list ? ` to ${list.name}` : ''} — try "Buy milk tomorrow 7pm !high"`}
+                placeholder={`Quick add${list ? ` to ${list.name}` : ''} — try "Pay rent friday 10am !high"`}
                 aria-label="New task"
               />
               <VoiceButton className="btn btn-ghost btn-icon btn-sm" onText={(t) => setText((p) => (p ? `${p} ${t}` : t))} onInterim={setInterim} />
@@ -358,8 +385,8 @@ function TasksPageInner() {
         ) : tasks.length === 0 ? (
           <EmptyState
             icon={view === 'completed' ? CircleCheck : Sparkles}
-            title={q ? 'No matches' : view === 'completed' ? 'Nothing completed yet' : 'All clear!'}
-            text={q ? 'Try a different search.' : view === 'completed' ? 'Tick off a task and it will show up here.' : 'Add a task above, or press N anywhere to quick-add.'}
+            title={q ? 'No matches' : (EMPTY[listId ? (view === 'completed' ? 'completed' : 'all') : view] || EMPTY.all).title}
+            text={q ? 'Try a different search.' : (EMPTY[listId ? (view === 'completed' ? 'completed' : 'all') : view] || EMPTY.all).text}
           />
         ) : (
           <div>

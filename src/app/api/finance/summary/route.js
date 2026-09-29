@@ -15,7 +15,7 @@ export const GET = route(async (req, { userId }) => {
   const { start, end } = monthBounds(month, tz);
   const uid = new mongoose.Types.ObjectId(userId);
 
-  const [totals, byCategory, budgets] = await Promise.all([
+  const [totals, byCategory, budgets, byMethod] = await Promise.all([
     Transaction.aggregate([
       { $match: { user: uid, date: { $gte: start, $lt: end } } },
       { $group: { _id: '$type', total: { $sum: '$amount' }, count: { $sum: 1 } } },
@@ -26,6 +26,11 @@ export const GET = route(async (req, { userId }) => {
       { $sort: { total: -1 } },
     ]),
     Budget.find({ user: userId }).lean(),
+    Transaction.aggregate([
+      { $match: { user: uid, type: 'expense', date: { $gte: start, $lt: end } } },
+      { $group: { _id: '$method', total: { $sum: '$amount' }, count: { $sum: 1 } } },
+      { $sort: { total: -1 } },
+    ]),
   ]);
 
   // Six-month trend ending at the selected month
@@ -62,6 +67,7 @@ export const GET = route(async (req, { userId }) => {
     count: totals.reduce((s, t) => s + t.count, 0),
     byCategory: byCategory.map((c) => ({ category: c._id, total: c.total, count: c.count })),
     trend,
+    byMethod: byMethod.map((m) => ({ method: m._id, total: m.total, count: m.count })),
     budgets: budgets.map((b) => ({ category: b.category, limit: b.limit, spent: spentBy[b.category] || 0 })),
   });
 });

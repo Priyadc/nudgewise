@@ -170,12 +170,13 @@ export function parseTransaction(input) {
 
   let method = 'upi';
   if (/\bcash\b/.test(text)) method = 'cash';
-  else if (/\b(card|credit card|debit card)\b/.test(text)) method = 'card';
+  else if (/\b(credit card|credit|cc)\b/.test(text)) method = 'credit_card';
+  else if (/\b(debit card|debit|card)\b/.test(text)) method = 'debit_card';
   else if (/\b(neft|imps|bank|transfer)\b/.test(text)) method = 'bank';
 
   const note = input
     .replace(/(?:₹|rs\.?|inr|\$)?\s?\d[\d,]*(?:\.\d{1,2})?\s?(k|thousand|lakh|lakhs)?\b/i, ' ')
-    .replace(/\b(spent|paid|pay|for|on|got|received|earned|via|using|by|rupees|rs|upi|cash|card|credit card|debit card|neft|imps)\b/gi, ' ')
+    .replace(/\b(spent|paid|pay|for|on|got|received|earned|via|using|by|rupees|rs|upi|cash|card|credit card|debit card|credit|debit|cc|neft|imps)\b/gi, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 

@@ -2,9 +2,8 @@
 
 import { forwardRef } from 'react';
 import { motion } from 'framer-motion';
-import { Bell, CalendarDays, Check, Image as ImageIcon, ListChecks, Repeat, Hash } from 'lucide-react';
+import { Bell, CalendarDays, Check, ListChecks, Repeat, Hash } from 'lucide-react';
 import { formatTime, relativeDay } from '@/lib/format';
-import { thumb } from '@/lib/client/upload';
 import { Avatar } from '@/components/ui/Controls';
 
 export function TaskCheck({ done, priority = 0, onToggle, label }) {
@@ -95,11 +94,6 @@ const TaskItem = forwardRef(function TaskItem({ task, onToggle, onOpen, showList
               <ListChecks /> {subDone}/{subTotal}
             </span>
           )}
-          {task.attachments?.length > 0 && (
-            <span className="chip">
-              <ImageIcon /> {task.attachments.length}
-            </span>
-          )}
           {task.tags?.map((t) => (
             <span key={t} className="chip">
               <Hash /> {t}
@@ -116,14 +110,6 @@ const TaskItem = forwardRef(function TaskItem({ task, onToggle, onOpen, showList
             </span>
           )}
         </div>
-        {task.attachments?.length > 0 && (
-          <div className="task-thumbs">
-            {task.attachments.slice(0, 4).map((a) => (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img key={a.url} src={thumb(a.url, 96)} alt="" loading="lazy" />
-            ))}
-          </div>
-        )}
       </div>
     </motion.div>
   );

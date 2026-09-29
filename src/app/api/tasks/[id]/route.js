@@ -3,7 +3,6 @@ import { taskUpdateSchema } from '@/lib/validators';
 import { requireTask, requireList, roleOnList } from '@/lib/access';
 import { syncTaskReminder } from '@/lib/reminders';
 import { nextOccurrence } from '@/lib/recurrence';
-import { destroyImages } from '@/lib/cloudinary';
 import Task from '@/models/Task';
 import Reminder from '@/models/Reminder';
 
@@ -42,13 +41,6 @@ export const PATCH = route(async (req, { params, userId }) => {
     rescheduled = true;
   }
 
-  // Images removed from the task are deleted from Cloudinary too
-  if (body.attachments) {
-    const keep = new Set(body.attachments.map((a) => a.publicId).filter(Boolean));
-    const removed = task.attachments.filter((a) => a.publicId && !keep.has(a.publicId)).map((a) => a.publicId);
-    destroyImages(removed);
-  }
-
   Object.assign(task, body);
   if (body.done === true) task.completedAt = new Date();
   if (body.done === false) task.completedAt = null;
@@ -60,7 +52,6 @@ export const PATCH = route(async (req, { params, userId }) => {
 
 export const DELETE = route(async (_req, { params, userId }) => {
   const { task } = await requireTask(params.id, userId, 'editor');
-  destroyImages(task.attachments.map((a) => a.publicId).filter(Boolean));
   await Reminder.deleteMany({ task: task._id });
   await task.deleteOne();
   return ok({ deleted: true });

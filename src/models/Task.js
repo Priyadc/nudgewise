@@ -1,15 +1,5 @@
 import mongoose from 'mongoose';
 
-const AttachmentSchema = new mongoose.Schema(
-  {
-    url: { type: String, required: true },
-    publicId: String,
-    width: Number,
-    height: Number,
-  },
-  { _id: true }
-);
-
 const SubtaskSchema = new mongoose.Schema(
   {
     title: { type: String, required: true, trim: true, maxlength: 200 },
@@ -34,7 +24,6 @@ const TaskSchema = new mongoose.Schema(
     repeat: { type: String, enum: ['none', 'daily', 'weekly', 'monthly', 'yearly'], default: 'none' },
     tags: { type: [String], default: [] },
     subtasks: { type: [SubtaskSchema], default: [] },
-    attachments: { type: [AttachmentSchema], default: [] },
     assignee: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
     order: { type: Number, default: 0 },
   },

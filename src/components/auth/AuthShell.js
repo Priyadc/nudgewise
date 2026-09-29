@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Bell, CircleCheck, Wallet } from 'lucide-react';
+import { Bell, CircleCheck, UsersRound, Wallet } from 'lucide-react';
 import Logo from '@/components/ui/Logo';
 import ThemeToggle from '@/components/ui/ThemeToggle';
 
@@ -36,7 +36,7 @@ export default function AuthShell({ children }) {
           animate={{ y: [0, -12, 0] }}
           transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
         >
-          <CircleCheck /> Submit report — done
+          <CircleCheck /> Submit report — done ✨
         </motion.div>
         <motion.div
           className="float-card"
@@ -44,7 +44,7 @@ export default function AuthShell({ children }) {
           animate={{ y: [0, 14, 0] }}
           transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut', delay: 0.6 }}
         >
-          <Bell /> Pay rent · tomorrow 9:00
+          <Bell /> Pay rent · tomorrow, 9 AM
         </motion.div>
         <motion.div
           className="float-card"
@@ -54,8 +54,16 @@ export default function AuthShell({ children }) {
         >
           <Wallet /> Food budget · 62% used
         </motion.div>
-        <h2>Everything you need to remember, beautifully organised.</h2>
-        <p>Tasks, reminders, bills and budgets — synced across your phone and laptop, shared with the people who matter.</p>
+        <motion.div
+          className="float-card"
+          style={{ top: '62%', right: '12%' }}
+          animate={{ y: [0, 12, 0] }}
+          transition={{ duration: 6.5, repeat: Infinity, ease: 'easeInOut', delay: 0.3 }}
+        >
+          <UsersRound /> Rahul owes you ₹450
+        </motion.div>
+        <h2>Your day and your money, sorted in one pocket.</h2>
+        <p>Tasks, reminders, budgets and split bills — on your phone and laptop, shared with the people who matter.</p>
       </aside>
     </div>
   );

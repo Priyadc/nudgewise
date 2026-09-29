@@ -1,7 +1,7 @@
 import { route, ok, readJson, assertId, HttpError } from '@/lib/api';
 import { transactionSchema } from '@/lib/validators';
-import { destroyImages } from '@/lib/cloudinary';
 import Transaction from '@/models/Transaction';
+import { normalizeSplit } from '@/lib/splits-server';
 
 async function own(id, userId) {
   assertId(id);
@@ -12,10 +12,7 @@ async function own(id, userId) {
 
 export const PATCH = route(async (req, { params, userId }) => {
   const t = await own(params.id, userId);
-  const body = transactionSchema.partial().parse(await readJson(req));
-  if ('receipt' in body && t.receipt?.publicId && body.receipt?.publicId !== t.receipt.publicId) {
-    destroyImages([t.receipt.publicId]);
-  }
+  const body = normalizeSplit(transactionSchema.partial().parse(await readJson(req)), t.type);
   Object.assign(t, body);
   await t.save();
   return ok({ transaction: t });
@@ -23,7 +20,6 @@ export const PATCH = route(async (req, { params, userId }) => {
 
 export const DELETE = route(async (_req, { params, userId }) => {
   const t = await own(params.id, userId);
-  if (t.receipt?.publicId) destroyImages([t.receipt.publicId]);
   await t.deleteOne();
   return ok({ deleted: true });
 });

@@ -9,7 +9,6 @@ import { toast } from 'sonner';
 import { useApp } from '@/components/layout/AppContext';
 import { Avatar, Switch } from '@/components/ui/Controls';
 import { Confirm } from '@/components/ui/Modal';
-import ImageUploader from '@/components/ui/ImageUploader';
 import CategoryIcon from '@/components/ui/CategoryIcon';
 import { api } from '@/lib/client/api';
 import { ACCENTS, applyAccent } from '@/lib/theme';
@@ -119,11 +118,6 @@ export default function SettingsPage() {
           <div className="row row-wrap" style={{ gap: 20, alignItems: 'flex-start' }}>
             <div className="stack" style={{ alignItems: 'center', gap: 8 }}>
               <Avatar user={user} size="lg" />
-              {features.uploads && (
-                <div style={{ width: 92 }}>
-                  <ImageUploader single value={[]} onChange={(v) => v[0] && patch({ image: v[0].url }, 'Photo updated')} />
-                </div>
-              )}
               {user.image && (
                 <button className="btn btn-ghost btn-sm" onClick={() => patch({ image: null }, 'Photo removed')}>
                   Remove photo

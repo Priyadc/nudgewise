@@ -7,11 +7,11 @@ import { signOut } from 'next-auth/react';
 import { motion } from 'framer-motion';
 import {
   Bell,
-  CalendarDays,
+  CalendarRange,
   CircleCheck,
   House,
-  Inbox,
   LayoutDashboard,
+  Sun,
   ListTodo,
   LogOut,
   Plus,
@@ -24,14 +24,15 @@ import ThemeToggle from '@/components/ui/ThemeToggle';
 import { Avatar } from '@/components/ui/Controls';
 import NotificationBell from './NotificationBell';
 import QuickAdd from './QuickAdd';
+import Sheets from './Sheets';
 import ListModal from '@/components/tasks/ListModal';
 import { AppProvider, useApp } from './AppContext';
 
 const NAV = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/tasks?view=today', label: 'Today', icon: CalendarDays, match: (p, sp) => p === '/tasks' && sp.get('view') === 'today' },
-  { href: '/tasks', label: 'All tasks', icon: ListTodo, match: (p, sp) => p === '/tasks' && !sp.get('list') && sp.get('view') !== 'today' && sp.get('view') !== 'inbox' },
-  { href: '/tasks?view=inbox', label: 'Inbox', icon: Inbox, match: (p, sp) => p === '/tasks' && sp.get('view') === 'inbox' },
+  { href: '/tasks?view=today', label: 'My Day', icon: Sun, match: (p, sp) => p === '/tasks' && sp.get('view') === 'today' },
+  { href: '/tasks?view=upcoming', label: 'Coming Up', icon: CalendarRange, match: (p, sp) => p === '/tasks' && sp.get('view') === 'upcoming' },
+  { href: '/tasks', label: 'All tasks', icon: ListTodo, match: (p, sp) => p === '/tasks' && !sp.get('list') && !['today', 'upcoming'].includes(sp.get('view')) },
   { href: '/reminders', label: 'Reminders', icon: Bell },
   { href: '/finance', label: 'Money', icon: Wallet },
   { href: '/settings', label: 'Settings', icon: Settings },
@@ -131,7 +132,7 @@ function MobileNav() {
             {it.label}
           </Link>
         ) : (
-          <button key={i} className="mn-add" onClick={() => openQuickAdd()} aria-label="Quick add">
+          <button key={i} className="mn-add" onClick={() => openQuickAdd()} aria-label="Add something">
             <Plus />
           </button>
         )
@@ -196,8 +197,8 @@ function Fab() {
     <motion.button
       className="fab"
       onClick={() => openQuickAdd()}
-      aria-label="Quick add (N)"
-      title="Quick add (N)"
+      aria-label="Add something (N)"
+      title="Add something (N)"
       whileHover={{ scale: 1.06, rotate: 90 }}
       whileTap={{ scale: 0.92 }}
       initial={{ scale: 0 }}
@@ -222,6 +223,7 @@ export default function AppShell({ children }) {
       <MobileNav />
       <Fab />
       <QuickAdd />
+      <Sheets />
       <Shortcuts />
     </AppProvider>
   );

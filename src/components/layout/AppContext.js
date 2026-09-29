@@ -13,6 +13,8 @@ export function AppProvider({ children }) {
   const [lists, setLists] = useState([]);
   const [quickAdd, setQuickAdd] = useState({ open: false, mode: 'task', listId: null });
   const [categories, setCategoriesState] = useState([]);
+  // One place to open the "add" sheets from anywhere: { kind: 'task' | 'reminder' | 'money', props }
+  const [sheet, setSheet] = useState({ kind: null, props: {} });
 
   /** Custom money categories: kept in state (to re-render) and in the shared registry (for lookups) */
   const setCategories = useCallback((list) => {
@@ -49,11 +51,17 @@ export function AppProvider({ children }) {
   const openQuickAdd = useCallback((mode = 'task', listId = null) => setQuickAdd({ open: true, mode, listId }), []);
   const closeQuickAdd = useCallback(() => setQuickAdd((q) => ({ ...q, open: false })), []);
 
+  const openSheet = useCallback((kind, props = {}) => {
+    setQuickAdd((q) => ({ ...q, open: false }));
+    setSheet({ kind, props });
+  }, []);
+  const closeSheet = useCallback(() => setSheet((x) => ({ ...x, kind: null })), []);
+
   const currency = user?.settings?.currency || 'INR';
 
   return (
     <AppContext.Provider
-      value={{ user, setUser, features, categories, setCategories, lists, setLists, reloadLists, reloadUser, currency, quickAdd, openQuickAdd, closeQuickAdd }}
+      value={{ user, setUser, features, categories, setCategories, lists, setLists, reloadLists, reloadUser, currency, quickAdd, openQuickAdd, closeQuickAdd, sheet, openSheet, closeSheet }}
     >
       {children}
     </AppContext.Provider>

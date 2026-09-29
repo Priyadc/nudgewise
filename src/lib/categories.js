@@ -93,13 +93,20 @@ export function categoryMeta(name) {
   );
 }
 
+/** `icon` is a lucide-react icon name. 'card' is legacy (before credit/debit were separate) and hidden from pickers. */
 export const PAYMENT_METHODS = [
-  { value: 'upi', label: 'UPI' },
-  { value: 'card', label: 'Card' },
-  { value: 'cash', label: 'Cash' },
-  { value: 'bank', label: 'Bank transfer' },
-  { value: 'other', label: 'Other' },
+  { value: 'upi', label: 'UPI', icon: 'Smartphone' },
+  { value: 'credit_card', label: 'Credit card', icon: 'CreditCard' },
+  { value: 'debit_card', label: 'Debit card', icon: 'WalletCards' },
+  { value: 'cash', label: 'Cash', icon: 'Banknote' },
+  { value: 'bank', label: 'Bank transfer', icon: 'Landmark' },
+  { value: 'other', label: 'Other', icon: 'CircleDashed' },
 ];
+
+export function methodLabel(value) {
+  if (value === 'card') return 'Card';
+  return PAYMENT_METHODS.find((m) => m.value === value)?.label || 'Other';
+}
 
 export const LIST_COLORS = ['#8b5cf6', '#3b82f6', '#06b6d4', '#10b981', '#eab308', '#f97316', '#ef4444', '#ec4899', '#64748b'];
 export const LIST_ICONS = ['📋', '💼', '🏠', '🛒', '🎯', '📚', '💪', '✈️', '🎉', '💡', '🧾', '❤️'];

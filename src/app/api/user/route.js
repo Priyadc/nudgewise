@@ -1,6 +1,5 @@
 import { route, ok, readJson } from '@/lib/api';
 import { settingsSchema } from '@/lib/validators';
-import { destroyImages, userFolder } from '@/lib/cloudinary';
 import User from '@/models/User';
 import Task from '@/models/Task';
 import List from '@/models/List';
@@ -13,20 +12,14 @@ import PushSubscription from '@/models/PushSubscription';
 
 export const GET = route(async (_req, { userId }) => {
   const user = await User.findById(userId);
-  return ok({ user, features: { google: Boolean(process.env.GOOGLE_CLIENT_ID), push: Boolean(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY), uploads: Boolean(process.env.CLOUDINARY_CLOUD_NAME) } });
+  return ok({ user, features: { google: Boolean(process.env.GOOGLE_CLIENT_ID), push: Boolean(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY) } });
 });
 
 export const PATCH = route(async (req, { userId }) => {
   const body = settingsSchema.parse(await readJson(req));
   const user = await User.findById(userId);
   if (body.name) user.name = body.name;
-  if (body.image !== undefined) {
-    if (user.image?.includes(`/${userFolder(userId)}/`) && user.image !== body.image) {
-      const publicId = user.image.split('/upload/')[1]?.replace(/^v\d+\//, '').replace(/\.[a-z]+$/i, '');
-      if (publicId) destroyImages([publicId]);
-    }
-    user.image = body.image;
-  }
+  if (body.image !== undefined) user.image = body.image;
   if (body.settings) user.settings = { ...user.toObject().settings, ...body.settings };
   await user.save();
   return ok({ user });

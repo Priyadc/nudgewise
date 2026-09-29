@@ -2,39 +2,30 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Bell, CalendarDays, Copy, Flag, FolderOpen, Hash, Loader2, Plus, Repeat, Share2, Trash2, UserRound, X, Image as ImageIcon, ListChecks, NotebookPen } from 'lucide-react';
+import { CalendarCheck, Copy, Hash, Loader2, Plus, Share2, Trash2, UserRound, X, ListChecks, NotebookPen } from 'lucide-react';
 import { toast } from 'sonner';
 import { Drawer, Confirm } from '@/components/ui/Modal';
-import { Segmented, Switch } from '@/components/ui/Controls';
-import ImageUploader from '@/components/ui/ImageUploader';
 import VoiceButton, { VoiceBar } from '@/components/ui/VoiceButton';
 import Menu from '@/components/ui/Menu';
 import { TaskCheck } from './TaskItem';
+import { WhenPicker, RemindPicker, PriorityPicker, RepeatPicker, ListPicker } from './Pickers';
 import { api, emit } from '@/lib/client/api';
-import { PRIORITIES, relativeDay, formatTime, toLocalInput, toDateInput } from '@/lib/format';
+import { relativeDay, formatTime } from '@/lib/format';
+import { buildDate, buildReminder, deriveRemind, describeWhenInline, describeDateInline, ymd, hm } from '@/lib/when';
 import { useApp } from '@/components/layout/AppContext';
-
-const REPEATS = [
-  { value: 'none', label: 'Does not repeat' },
-  { value: 'daily', label: 'Every day' },
-  { value: 'weekly', label: 'Every week' },
-  { value: 'monthly', label: 'Every month' },
-  { value: 'yearly', label: 'Every year' },
-];
 
 function fromTask(t) {
   return {
     title: t.title || '',
     notes: t.notes || '',
-    hasTime: Boolean(t.hasTime),
-    due: t.dueDate ? (t.hasTime ? toLocalInput(t.dueDate) : toDateInput(t.dueDate)) : '',
-    reminderAt: t.reminderAt ? toLocalInput(t.reminderAt) : '',
+    date: t.dueDate ? ymd(new Date(t.dueDate)) : '',
+    time: t.dueDate && t.hasTime ? hm(new Date(t.dueDate)) : '',
+    ...deriveRemind(t.dueDate, t.hasTime, t.reminderAt),
     priority: t.priority || 0,
     repeat: t.repeat || 'none',
     list: t.list?._id || t.list || '',
     tags: t.tags || [],
     subtasks: (t.subtasks || []).map((s) => ({ title: s.title, done: s.done })),
-    attachments: t.attachments || [],
     assignee: t.assignee?._id || t.assignee || '',
   };
 }
@@ -71,22 +62,17 @@ export default function TaskDrawer({ task, open, onClose, onChanged, onDeleted }
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
 
   function payload() {
-    let dueDate = null;
-    if (form.due) {
-      dueDate = form.hasTime ? new Date(form.due) : new Date(`${form.due.slice(0, 10)}T23:59:00`);
-    }
     return {
       title: form.title.trim(),
       notes: form.notes,
-      dueDate,
-      hasTime: form.hasTime,
-      reminderAt: form.reminderAt ? new Date(form.reminderAt) : null,
+      dueDate: buildDate(form.date, form.time),
+      hasTime: Boolean(form.date && form.time),
+      reminderAt: buildReminder(form.date, form.time, form.remind, form.custom),
       priority: form.priority,
-      repeat: form.repeat,
+      repeat: form.date ? form.repeat : 'none',
       list: form.list || null,
       tags: form.tags,
       subtasks: form.subtasks.filter((s) => s.title.trim()),
-      attachments: form.attachments,
       assignee: form.assignee || null,
     };
   }
@@ -147,6 +133,7 @@ export default function TaskDrawer({ task, open, onClose, onChanged, onDeleted }
   }
 
   const doneCount = form.subtasks.filter((s) => s.done).length;
+  const reminderAt = buildReminder(form.date, form.time, form.remind, form.custom);
 
   return (
     <>
@@ -192,77 +179,20 @@ export default function TaskDrawer({ task, open, onClose, onChanged, onDeleted }
           aria-label="Task title"
         />
 
-        <div className="field">
-          <span className="label row" style={{ gap: 6 }}>
-            <Flag size={15} /> Priority
-          </span>
-          <Segmented
-            value={form.priority}
-            onChange={(v) => !readOnly && set({ priority: v })}
-            options={PRIORITIES.map((p) => ({ value: p.value, label: p.label }))}
-            size="block"
-          />
-        </div>
-
-        <div className="grid grid-2" style={{ gap: 12 }}>
-          <div className="field">
-            <span className="label row between">
-              <span className="row" style={{ gap: 6 }}>
-                <CalendarDays size={15} /> Due
-              </span>
-              <span className="row tiny" style={{ gap: 6 }}>
-                time <Switch checked={form.hasTime} onChange={(v) => set({ hasTime: v, due: form.due ? (v ? `${form.due.slice(0, 10)}T09:00` : form.due.slice(0, 10)) : '' })} label="Include time" />
-              </span>
+        <WhenPicker date={form.date} time={form.time} disabled={readOnly} onChange={({ date, time }) => set({ date, time })} />
+        <RemindPicker date={form.date} time={form.time} remind={form.remind} custom={form.custom} disabled={readOnly} onChange={(r) => set(r)} />
+        <PriorityPicker value={form.priority} disabled={readOnly} onChange={(v) => set({ priority: v })} />
+        {form.date && <RepeatPicker value={form.repeat} disabled={readOnly} onChange={(v) => set({ repeat: v })} />}
+        {!readOnly && <ListPicker lists={lists.filter((l) => l.role !== 'viewer')} value={form.list} onChange={(v) => set({ list: v, assignee: '' })} />}
+        {(form.date || reminderAt) && (
+          <div className="summary-line">
+            <CalendarCheck />
+            <span>
+              {form.date ? `Due ${describeWhenInline(form.date, form.time)}` : 'No due date'}
+              {reminderAt ? ` · reminder ${describeDateInline(reminderAt)}` : ''}
             </span>
-            <input
-              className="input"
-              type={form.hasTime ? 'datetime-local' : 'date'}
-              value={form.hasTime ? form.due : form.due.slice(0, 10)}
-              onChange={(e) => set({ due: e.target.value })}
-              disabled={readOnly}
-            />
           </div>
-          <div className="field">
-            <span className="label row" style={{ gap: 6 }}>
-              <Bell size={15} /> Remind me
-            </span>
-            <div className="row" style={{ gap: 6 }}>
-              <input className="input" type="datetime-local" value={form.reminderAt} onChange={(e) => set({ reminderAt: e.target.value })} disabled={readOnly} />
-              {form.reminderAt && !readOnly && (
-                <button className="btn btn-ghost btn-icon btn-sm" onClick={() => set({ reminderAt: '' })} aria-label="Remove reminder">
-                  <X />
-                </button>
-              )}
-            </div>
-          </div>
-          <div className="field">
-            <span className="label row" style={{ gap: 6 }}>
-              <Repeat size={15} /> Repeat
-            </span>
-            <select className="select" value={form.repeat} onChange={(e) => set({ repeat: e.target.value })} disabled={readOnly}>
-              {REPEATS.map((r) => (
-                <option key={r.value} value={r.value}>
-                  {r.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="field">
-            <span className="label row" style={{ gap: 6 }}>
-              <FolderOpen size={15} /> List
-            </span>
-            <select className="select" value={form.list} onChange={(e) => set({ list: e.target.value, assignee: '' })} disabled={readOnly}>
-              <option value="">Inbox</option>
-              {lists
-                .filter((l) => l.role !== 'viewer' || l._id === form.list)
-                .map((l) => (
-                  <option key={l._id} value={l._id}>
-                    {l.icon} {l.name}
-                  </option>
-                ))}
-            </select>
-          </div>
-        </div>
+        )}
 
         {members.length > 1 && (
           <div className="field">
@@ -356,13 +286,6 @@ export default function TaskDrawer({ task, open, onClose, onChanged, onDeleted }
           </div>
         </div>
 
-        <div className="field">
-          <span className="label row" style={{ gap: 6 }}>
-            <ImageIcon size={15} /> Photos
-          </span>
-          <ImageUploader value={form.attachments} onChange={(v) => set({ attachments: v })} disabled={readOnly} />
-        </div>
-
         {!readOnly && (
           <div className="row" style={{ position: 'sticky', bottom: 0, paddingTop: 12, paddingBottom: 4, background: 'var(--surface-solid)', justifyContent: 'flex-end' }}>
             <button className="btn btn-ghost" onClick={onClose}>
@@ -374,7 +297,7 @@ export default function TaskDrawer({ task, open, onClose, onChanged, onDeleted }
           </div>
         )}
       </Drawer>
-      <Confirm open={confirm} onClose={() => setConfirm(false)} onConfirm={remove} title="Delete this task?" message="This also removes its checklist, photos and reminder. This can't be undone." />
+      <Confirm open={confirm} onClose={() => setConfirm(false)} onConfirm={remove} title="Delete this task?" message="This also removes its checklist and reminder. This can't be undone." />
     </>
   );
 }

@@ -10,16 +10,6 @@ const dateField = z.preprocess((v) => {
 const objectId = z.string().regex(/^[a-f\d]{24}$/i, 'Invalid id');
 const repeat = z.enum(['none', 'daily', 'weekly', 'monthly', 'yearly']);
 const tags = z.array(z.string().trim().min(1).max(30)).max(10);
-const cloudinaryUrl = z
-  .string()
-  .url()
-  .refine((u) => u.startsWith('https://res.cloudinary.com/'), 'Images must be uploaded through Pockeazy');
-const attachment = z.object({
-  url: cloudinaryUrl,
-  publicId: z.string().max(200).optional(),
-  width: z.number().optional(),
-  height: z.number().optional(),
-});
 
 export const registerSchema = z.object({
   name: z.string().trim().min(2, 'Name must be at least 2 characters').max(80),
@@ -43,7 +33,6 @@ export const taskCreateSchema = z.object({
   repeat: repeat.optional(),
   tags: tags.optional(),
   subtasks: z.array(z.object({ title: z.string().trim().min(1).max(200), done: z.boolean().optional() })).max(50).optional(),
-  attachments: z.array(attachment).max(10).optional(),
   assignee: objectId.nullable().optional(),
 });
 
@@ -72,15 +61,43 @@ export const reminderUpdateSchema = reminderSchema.partial().extend({
   status: z.enum(['active', 'done']).optional(),
 });
 
+const money = z.coerce.number().min(0).max(1e11);
+
+/** A shared bill: `amount` on the transaction must equal my share (total − everyone else's shares) */
+export const splitSchema = z
+  .object({
+    total: money.refine((v) => v > 0, 'Enter the total bill amount'),
+    paidBy: z.string().trim().min(1).max(40).default('me'),
+    meSettled: z.boolean().optional(),
+    people: z
+      .array(
+        z.object({
+          name: z.string().trim().min(1, 'Every person needs a name').max(40),
+          share: money,
+          settled: z.boolean().optional(),
+        })
+      )
+      .min(1, 'Add at least one person to split with')
+      .max(20, 'You can split with up to 20 people'),
+  })
+  .superRefine((s, ctx) => {
+    const names = s.people.map((p) => p.name.toLowerCase());
+    if (new Set(names).size !== names.length) ctx.addIssue({ code: 'custom', message: 'Each person should appear only once' });
+    if (names.includes('me') || names.includes('you')) ctx.addIssue({ code: 'custom', message: 'Use a real name instead of "me" or "you"' });
+    if (s.paidBy !== 'me' && !names.includes(s.paidBy.toLowerCase())) ctx.addIssue({ code: 'custom', message: 'Who paid must be you or someone in the split' });
+    const others = s.people.reduce((sum, p) => sum + p.share, 0);
+    if (others > s.total + 0.01) ctx.addIssue({ code: 'custom', message: "Other people's shares add up to more than the total" });
+  });
+
 export const transactionSchema = z.object({
   type: z.enum(['income', 'expense']),
   amount: z.coerce.number().positive('Amount must be greater than 0').max(1e11),
   category: z.string().trim().min(1).max(40),
   note: z.string().max(300).optional(),
   date: dateField.optional(),
-  method: z.enum(['upi', 'card', 'cash', 'bank', 'other']).optional(),
+  method: z.enum(['upi', 'credit_card', 'debit_card', 'card', 'cash', 'bank', 'other']).optional(),
   tags: tags.optional(),
-  receipt: z.object({ url: cloudinaryUrl, publicId: z.string().optional() }).nullable().optional(),
+  split: splitSchema.nullable().optional(),
 });
 
 export const budgetSchema = z.object({

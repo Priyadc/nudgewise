@@ -1,10 +1,10 @@
 # Pockeazy — tasks, reminders & money in one app
 
 Pockeazy is a full-stack productivity app: to-do lists, reminders, bills and expense tracking,
-with voice input, photo attachments, shared lists, push notifications, and light/dark themes.
+with voice input, bill splitting, shared lists, push notifications, and light/dark themes.
 
 **Stack:** Next.js 15 (App Router, JavaScript) · React 19 · MongoDB Atlas + Mongoose · NextAuth (email/password + Google) ·
-Cloudinary (images) · Web Push (VAPID) · Nodemailer (email) · Framer Motion · Lucide icons · plain CSS design system.
+Web Push (VAPID) · Nodemailer (email) · Framer Motion · Lucide icons · plain CSS design system.
 
 ---
 
@@ -27,7 +27,6 @@ Everything else (Google, images, push, email) is optional and switches on when i
 | **MongoDB Atlas** | Database | atlas.mongodb.com → create free M0 cluster → Database Access (user) → Network Access → add `0.0.0.0/0` → Connect → Drivers → copy URI into `MONGODB_URI` (add `/pockeazy` before `?`) |
 | **NextAuth secret** | Signs login sessions | `openssl rand -base64 32` → `NEXTAUTH_SECRET` |
 | **Google OAuth** | "Continue with Google" | console.cloud.google.com → APIs & Services → OAuth consent screen (External) → Credentials → OAuth client ID (Web). Authorized redirect URIs: `http://localhost:3000/api/auth/callback/google` and `https://YOUR-APP.vercel.app/api/auth/callback/google` |
-| **Cloudinary** | Task photos, receipts, avatars | cloudinary.com → Dashboard → copy cloud name, API key, API secret |
 | **VAPID keys** | Push notifications | `npm run vapid` → public key → `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, private → `VAPID_PRIVATE_KEY` |
 | **Gmail SMTP** | Email reminders, password reset, invites | Google Account → Security → 2-Step Verification on → App passwords → create one → `SMTP_USER` = your Gmail, `SMTP_PASS` = the app password |
 | **CRON_SECRET** | Protects the reminder endpoint | any long random string |
@@ -79,5 +78,5 @@ public/        manifest.json, sw.js (push + offline), icons
 ## Security notes
 
 Passwords hashed with bcrypt (12 rounds) · JWT sessions (httpOnly cookies) · every API validates input with zod
-and checks ownership / list roles · images uploaded directly to Cloudinary with server signatures ·
+and checks ownership / list roles ·
 reset tokens stored hashed with 30-minute expiry · security headers set in `next.config.mjs`.

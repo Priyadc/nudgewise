@@ -9,7 +9,7 @@ const grotesk = Space_Grotesk({ subsets: ['latin'], variable: '--font-grotesk', 
 export const metadata = {
   title: { default: 'Pockeazy — Tasks, reminders & money in one place', template: '%s · Pockeazy' },
   description:
-    'Pockeazy brings your to-dos, reminders, bills and spending into one beautiful app. Voice input, photo attachments, shared lists and dark mode.',
+    'Pockeazy brings your to-dos, reminders, bills and spending into one beautiful app. Voice input, bill splitting, shared lists and dark mode.',
   applicationName: 'Pockeazy',
   manifest: '/manifest.json',
   icons: { icon: '/icon.svg?v=2', apple: '/icons/apple-touch-icon.png?v=2' },

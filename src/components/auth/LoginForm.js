@@ -41,9 +41,9 @@ export default function LoginForm({ googleEnabled, callbackUrl = '/dashboard', i
 
   return (
     <AuthShell>
-      <h1 style={{ fontSize: 30 }}>Welcome back</h1>
+      <h1 style={{ fontSize: 30 }}>Welcome back 👋</h1>
       <p className="muted" style={{ margin: '8px 0 28px' }}>
-        Sign in to pick up where you left off.
+        Your tasks, reminders and money are right where you left them.
       </p>
 
       {googleEnabled && (

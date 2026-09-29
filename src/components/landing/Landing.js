@@ -6,7 +6,6 @@ import {
   ArrowRight,
   Bell,
   CircleCheck,
-  Camera,
   ChartPie,
   Mic,
   Moon,
@@ -16,20 +15,21 @@ import {
   Wallet,
   Repeat,
   ShieldCheck,
+  UsersRound,
 } from 'lucide-react';
 import Logo from '@/components/ui/Logo';
 import ThemeToggle from '@/components/ui/ThemeToggle';
 
 const FEATURES = [
-  { icon: CircleCheck, title: 'Smart tasks', text: 'Lists, priorities, subtasks, tags and recurring tasks. Type "Pay rent tomorrow 9am !high" and Pockeazy fills in the rest.' },
-  { icon: Bell, title: 'Reminders that reach you', text: 'Push notifications on your phone and laptop, email reminders and in-app alerts — repeating daily, weekly or monthly.' },
-  { icon: Wallet, title: 'Money, sorted', text: 'Track income and expenses by category, set monthly budgets, and never miss a bill with due-date alerts.' },
-  { icon: Mic, title: 'Voice to text', text: 'Tap the mic and speak. Add tasks, notes and expenses hands-free — "spent 250 on Swiggy" just works.' },
-  { icon: Camera, title: 'Photos & receipts', text: 'Attach pictures to tasks and snap receipts for expenses. Everything stays with the item it belongs to.' },
-  { icon: Share2, title: 'Share with friends', text: 'Share a list with one link. Friends can view or edit, and you choose who stays in the loop.' },
-  { icon: ChartPie, title: 'Beautiful insights', text: 'Animated charts show where your money goes and how productive your week was.' },
-  { icon: Moon, title: 'Light, dark & your colour', text: 'Switch themes instantly and pick an accent colour that feels like yours.' },
-  { icon: Smartphone, title: 'Install it like an app', text: 'Add Pockeazy to your home screen on Android, iPhone or desktop. It opens full-screen, just like a native app.' },
+  { icon: CircleCheck, title: 'Tasks that plan themselves', text: 'Type “Pay rent friday 10am !high” — or just tap Today, 9 AM, High. Lists, checklists and repeats included.' },
+  { icon: Bell, title: 'Reminders that actually reach you', text: 'A nudge on your phone, laptop or inbox at the exact minute — even when the app is closed.' },
+  { icon: Wallet, title: 'See where every rupee goes', text: '45+ categories, monthly budgets and bill alerts. UPI, cash or credit card — you’ll know what you spent and how.' },
+  { icon: UsersRound, title: 'Split bills, stay friends', text: 'Dinner, cabs, trips — split equally or your way. Pockeazy remembers who owes whom, so you don’t have to.' },
+  { icon: Mic, title: 'Just say it', text: 'Tap the mic: “spent 250 on Swiggy by credit card”. Done. Works for tasks and reminders too.' },
+  { icon: Share2, title: 'Plan together', text: 'Share a grocery or trip list with one link. Everyone sees updates live — no more “did you buy the milk?”' },
+  { icon: ChartPie, title: 'Your month at a glance', text: 'Clean, animated charts show your spending, savings rate and how productive your week was.' },
+  { icon: Moon, title: 'Looks good, day or night', text: 'Light, dark and your favourite accent colour. Calm by design, never cluttered.' },
+  { icon: Smartphone, title: 'An app without the app store', text: 'Add Pockeazy to your home screen on Android, iPhone or desktop — it opens full-screen, like a native app.' },
 ];
 
 const fadeUp = {
@@ -38,11 +38,12 @@ const fadeUp = {
 };
 
 export default function Landing({ signedIn }) {
-  const cta = signedIn ? { href: '/dashboard', label: 'Open your dashboard' } : { href: '/register', label: 'Get started — it’s free' };
+  const cta = signedIn ? { href: '/dashboard', label: 'Open your dashboard' } : { href: '/register', label: 'Start free' };
 
   return (
     <>
-      <nav className="landing-nav glass">
+      <div className="landing-header">
+      <nav className="landing-nav">
         <Link href="/" className="brand" style={{ padding: 0 }}>
           <span className="brand-mark">
             <Logo />
@@ -67,18 +68,19 @@ export default function Landing({ signedIn }) {
           )}
         </div>
       </nav>
+      </div>
 
       <header className="hero">
         <motion.div initial="hidden" animate="show">
           <motion.div variants={fadeUp} className="eyebrow">
-            <b>New</b> Voice input & shared lists
+            <b>New</b> Split bills with friends
           </motion.div>
           <motion.h1 variants={fadeUp} custom={1}>
-            Your tasks, reminders <span className="gradient-text">& money</span> — all ticked off.
+            Your day and your money, <span className="gradient-text">sorted in one pocket.</span>
           </motion.h1>
           <motion.p variants={fadeUp} custom={2} className="hero-lead">
-            Plan your day, get reminded at the right moment, and see exactly where your money goes. Pockeazy is the calm,
-            beautiful home for everything you need to remember.
+            Pockeazy remembers what you’d forget — tasks, bills, birthdays — nudges you right on time, and shows where every
+            rupee goes. Even who still owes you for dinner.
           </motion.p>
           <motion.div variants={fadeUp} custom={3} className="row row-wrap">
             <Link href={cta.href} className="btn btn-primary btn-lg">
@@ -92,13 +94,13 @@ export default function Landing({ signedIn }) {
           </motion.div>
           <motion.div variants={fadeUp} custom={4} className="row row-wrap muted small" style={{ marginTop: 22, gap: 18 }}>
             <span className="row" style={{ gap: 6 }}>
-              <ShieldCheck size={16} /> Secure sign-in
+              <ShieldCheck size={16} /> Private to you
             </span>
             <span className="row" style={{ gap: 6 }}>
-              <Repeat size={16} /> Syncs on every device
+              <Repeat size={16} /> Phone, tablet & laptop
             </span>
             <span className="row" style={{ gap: 6 }}>
-              <Sparkles size={16} /> Free forever
+              <Sparkles size={16} /> Free, no ads
             </span>
           </motion.div>
         </motion.div>
@@ -133,9 +135,9 @@ export default function Landing({ signedIn }) {
 
       <section className="section" id="features">
         <motion.div className="section-head" initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.4 }}>
-          <motion.h2 variants={fadeUp}>Everything you juggle, finally in one place</motion.h2>
+          <motion.h2 variants={fadeUp}>One app instead of five</motion.h2>
           <motion.p variants={fadeUp} custom={1}>
-            We studied the best to-do, reminder and money apps and brought their most-loved features together.
+            Your to-do list, reminder app, expense tracker and bill-splitter — finally talking to each other.
           </motion.p>
         </motion.div>
         <div className="grid grid-3">
@@ -167,9 +169,9 @@ export default function Landing({ signedIn }) {
           viewport={{ once: true }}
           transition={{ duration: 0.7 }}
         >
-          <h2>Start your first list in under a minute</h2>
+          <h2>Give your brain a day off</h2>
           <p style={{ opacity: 0.88, margin: '12px auto 26px', maxWidth: 520 }}>
-            Sign up with your email or Google account. No credit card, no clutter.
+            Sign up in 30 seconds with email or Google. No card, no clutter — just a calmer you.
           </p>
           <Link href={cta.href} className="btn btn-lg" style={{ background: '#fff', color: '#1e1b4b' }}>
             {cta.label} <ArrowRight />
@@ -178,7 +180,7 @@ export default function Landing({ signedIn }) {
       </section>
 
       <footer className="footer">
-        <span>© {new Date().getFullYear()} Pockeazy. Built with Next.js & MongoDB.</span>
+        <span>© {new Date().getFullYear()} Pockeazy · Made with care in India</span>
         <span className="row" style={{ gap: 16 }}>
           <Link href="/login">Sign in</Link>
           <Link href="/register">Create account</Link>

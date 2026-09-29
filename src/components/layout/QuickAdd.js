@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Bell, CalendarDays, CircleCheck, Flag, Hash, Loader2, Repeat, Send, Wallet, FolderOpen } from 'lucide-react';
+import { ArrowDownLeft, ArrowUpRight, Bell, BellRing, CalendarDays, CircleCheck, CircleCheckBig, Flag, Hash, Loader2, Repeat, Send, Wallet, FolderOpen, Sparkles, UsersRound } from 'lucide-react';
+import { methodLabel } from '@/lib/categories';
 import { toast } from 'sonner';
 import { Modal } from '@/components/ui/Modal';
 import { Segmented } from '@/components/ui/Controls';
@@ -19,6 +20,14 @@ const MODES = [
   { value: 'expense', label: 'Money', icon: Wallet },
 ];
 
+const TILES = [
+  { kind: 'task', label: 'New task', text: 'Something to get done', icon: CircleCheckBig, color: 'var(--accent)' },
+  { kind: 'reminder', label: 'Reminder', text: 'Get nudged at a time', icon: BellRing, color: 'var(--warning)' },
+  { kind: 'money', props: { type: 'expense' }, label: 'Spent', text: 'Log an expense', icon: ArrowUpRight, color: 'var(--danger)' },
+  { kind: 'money', props: { type: 'income' }, label: 'Received', text: 'Log income', icon: ArrowDownLeft, color: 'var(--success)' },
+  { kind: 'money', props: { type: 'expense', split: true }, label: 'Split a bill', text: 'Share with friends', icon: UsersRound, color: 'var(--info)' },
+];
+
 const PLACEHOLDER = {
   task: 'e.g. Submit report friday 5pm !high #work',
   reminder: 'e.g. Call mom tomorrow at 7pm every week',
@@ -27,7 +36,7 @@ const PLACEHOLDER = {
 
 /** Universal quick-add: one input, natural language, works with voice. Opens with the + button or the "N" key. */
 export default function QuickAdd() {
-  const { quickAdd, closeQuickAdd, lists, currency } = useApp();
+  const { quickAdd, closeQuickAdd, openSheet, lists, currency } = useApp();
   const [mode, setMode] = useState('task');
   const [text, setText] = useState('');
   const [interim, setInterim] = useState('');
@@ -40,7 +49,6 @@ export default function QuickAdd() {
       setMode(quickAdd.mode || 'task');
       setListId(quickAdd.listId || '');
       setText('');
-      setTimeout(() => inputRef.current?.focus(), 80);
     }
   }, [quickAdd]);
 
@@ -98,8 +106,34 @@ export default function QuickAdd() {
   }
 
   return (
-    <Modal open={quickAdd.open} onClose={closeQuickAdd} title="Quick add">
+    <Modal open={quickAdd.open} onClose={closeQuickAdd} title="What would you like to add?">
       <div className="stack">
+        <div className="add-tiles">
+          {TILES.map((t, i) => (
+            <motion.button
+              key={t.label}
+              type="button"
+              className="add-tile"
+              onClick={() => openSheet(t.kind, { ...(t.props || {}), ...(t.kind === 'task' && quickAdd.listId ? { list: quickAdd.listId } : {}) })}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.035 }}
+              whileTap={{ scale: 0.96 }}
+            >
+              <span className="stat-icon" style={{ background: `color-mix(in oklch, ${t.color}, transparent 86%)`, color: t.color }}>
+                <t.icon />
+              </span>
+              <b>{t.label}</b>
+              <span>{t.text}</span>
+            </motion.button>
+          ))}
+        </div>
+
+        <div className="row" style={{ gap: 8, marginTop: 6 }}>
+          <Sparkles size={16} className="faint" />
+          <span className="small bold">Or just type it</span>
+          <span className="tiny faint">— we'll understand</span>
+        </div>
         <Segmented value={mode} onChange={setMode} options={MODES} size="block" />
 
         <form onSubmit={submit} className="quick-add">
@@ -165,7 +199,7 @@ export default function QuickAdd() {
                   <span className="chip" style={{ paddingLeft: 3 }}>
                     <CategoryIcon name={txn.category} size={18} /> {txn.category}
                   </span>
-                  <span className="chip">{txn.method.toUpperCase()}</span>
+                  <span className="chip">{methodLabel(txn.method)}</span>
                 </>
               )}
             </motion.div>
@@ -176,7 +210,7 @@ export default function QuickAdd() {
           <div className="row" style={{ gap: 8 }}>
             <FolderOpen size={17} className="faint" />
             <select className="select" value={listId} onChange={(e) => setListId(e.target.value)} style={{ height: 38 }} aria-label="List">
-              <option value="">Inbox (no list)</option>
+              <option value="">No list</option>
               {editable.map((l) => (
                 <option key={l._id} value={l._id}>
                   {l.icon} {l.name}
@@ -186,8 +220,8 @@ export default function QuickAdd() {
           </div>
         )}
         <p className="hint">
-          Tip: type or speak naturally. Use <span className="kbd">!high</span> <span className="kbd">#tag</span> <span className="kbd">@List</span>{' '}
-          <span className="kbd">every week</span>. Press <span className="kbd">N</span> anywhere to open this.
+          Try <span className="kbd">!high</span> <span className="kbd">#tag</span> <span className="kbd">@List</span> <span className="kbd">every week</span> or{' '}
+          <span className="kbd">paid 400 by credit card</span>. Press <span className="kbd">N</span> anywhere to open this.
         </p>
       </div>
     </Modal>

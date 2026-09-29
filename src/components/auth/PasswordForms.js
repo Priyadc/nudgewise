@@ -39,7 +39,7 @@ export function ForgotForm() {
             <MailCheck />
           </div>
           <h1 style={{ fontSize: 28 }}>Check your inbox</h1>
-          <p className="muted">If {email} has an Pockeazy account, we sent a link to reset your password. It expires in 30 minutes.</p>
+          <p className="muted">If {email} has a Pockeazy account, we sent a link to reset your password. It expires in 30 minutes.</p>
           <Link href="/login" className="btn btn-soft" style={{ marginTop: 10 }}>
             <ArrowLeft /> Back to sign in
           </Link>
@@ -48,7 +48,7 @@ export function ForgotForm() {
         <>
           <h1 style={{ fontSize: 28 }}>Forgot your password?</h1>
           <p className="muted" style={{ margin: '8px 0 26px' }}>
-            Enter your email and we will send you a reset link.
+            It happens to the best of us. Enter your email and we'll send a reset link.
           </p>
           <form onSubmit={onSubmit} className="stack">
             <div className="input-wrap">

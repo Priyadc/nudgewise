@@ -67,9 +67,9 @@ export default function RegisterForm({ googleEnabled, callbackUrl = '/dashboard'
 
   return (
     <AuthShell>
-      <h1 style={{ fontSize: 30 }}>Create your account</h1>
+      <h1 style={{ fontSize: 30 }}>Create your free account</h1>
       <p className="muted" style={{ margin: '8px 0 28px' }}>
-        Free forever. Takes less than a minute.
+        30 seconds to a calmer, more organised you.
       </p>
 
       {googleEnabled && (
@@ -148,7 +148,7 @@ export default function RegisterForm({ googleEnabled, callbackUrl = '/dashboard'
         <button className="btn btn-primary btn-lg btn-block" disabled={loading || !valid} style={{ marginTop: 6 }}>
           {loading ? <Loader2 className="spin" /> : null} Create account
         </button>
-        <p className="hint center">By signing up you agree to use Pockeazy responsibly. Your data is private to you.</p>
+        <p className="hint center">Your data stays private to you. No ads, ever.</p>
       </form>
 
       <p className="muted center" style={{ marginTop: 20 }}>
