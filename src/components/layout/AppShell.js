@@ -102,7 +102,7 @@ function Sidebar() {
             <div className="tiny faint truncate">{user?.email}</div>
           </div>
           <ThemeToggle className="btn btn-ghost btn-icon btn-sm" />
-          <button className="btn btn-ghost btn-icon btn-sm" onClick={() => signOut({ callbackUrl: '/' })} aria-label="Sign out" title="Sign out">
+          <button className="btn btn-ghost btn-icon btn-sm" onClick={() => signOut({ callbackUrl: '/' })} aria-label="Sign out" data-tip="Sign out">
             <LogOut />
           </button>
         </div>
@@ -160,6 +160,9 @@ function Topbar() {
       </Link>
       <div className="grow" />
       <NotificationBell />
+      <button className="btn btn-ghost btn-icon" onClick={() => signOut({ callbackUrl: '/' })} aria-label="Sign out" data-tip="Sign out" data-tip-pos="bottom">
+        <LogOut />
+      </button>
       <span className="show-mobile">
         <ThemeToggle />
       </span>

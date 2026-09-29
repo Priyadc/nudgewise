@@ -400,7 +400,7 @@ function TasksPageInner() {
                 <div className="task-list">
                   <AnimatePresence initial={false} mode="popLayout">
                     {g.items.map((t) => (
-                      <TaskItem key={t._id} task={t} onToggle={toggle} onOpen={setActive} showList={!listId} readOnly={readOnly} />
+                      <TaskItem key={t._id} task={t} onToggle={toggle} onOpen={setActive} onDeleted={(id) => setTasks((ts) => ts.filter((x) => x._id !== id))} showList={!listId} readOnly={readOnly} />
                     ))}
                   </AnimatePresence>
                 </div>

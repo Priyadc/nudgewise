@@ -198,7 +198,7 @@ export default function DashboardPage() {
           ) : (
             <div className="task-list">
               {tasks.today.map((t) => (
-                <TaskItem key={t._id} task={t} onToggle={toggle} onOpen={setActive} />
+                <TaskItem key={t._id} task={t} onToggle={toggle} onOpen={setActive} onDeleted={() => load()} />
               ))}
             </div>
           )}

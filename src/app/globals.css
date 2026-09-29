@@ -2216,3 +2216,66 @@ button.chip {
   background: var(--surface);
   border: 1px solid var(--border);
 }
+
+/* ---------- Tooltips: add data-tip="Label" (data-tip-pos="bottom" to show below) ---------- */
+[data-tip] {
+  position: relative;
+}
+[data-tip]::after {
+  content: attr(data-tip);
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  transform: translate(-50%, 4px);
+  padding: 5px 9px;
+  border-radius: 8px;
+  background: var(--text);
+  color: var(--bg);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 60;
+  box-shadow: var(--shadow);
+  transition: opacity 0.15s, transform 0.15s var(--ease);
+}
+[data-tip][data-tip-pos='bottom']::after {
+  bottom: auto;
+  top: calc(100% + 8px);
+  transform: translate(-50%, -4px);
+}
+[data-tip]:hover::after,
+[data-tip]:focus-visible::after {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+@media (hover: none) {
+  [data-tip]::after {
+    display: none;
+  }
+}
+
+/* ---------- Edit / delete buttons on a task ---------- */
+.task-actions {
+  display: flex;
+  gap: 2px;
+  align-self: center;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.task-row:hover .task-actions,
+.task-row:focus-within .task-actions {
+  opacity: 1;
+}
+.task-actions .task-delete:hover {
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+@media (hover: none) {
+  .task-actions {
+    opacity: 1;
+  }
+}
