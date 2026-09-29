@@ -30,9 +30,9 @@ import { AppProvider, useApp } from './AppContext';
 
 const NAV = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/tasks?view=today', label: 'My Day', icon: Sun, match: (p, sp) => p === '/tasks' && sp.get('view') === 'today' },
-  { href: '/tasks?view=upcoming', label: 'Coming Up', icon: CalendarRange, match: (p, sp) => p === '/tasks' && sp.get('view') === 'upcoming' },
-  { href: '/tasks', label: 'All tasks', icon: ListTodo, match: (p, sp) => p === '/tasks' && !sp.get('list') && !['today', 'upcoming'].includes(sp.get('view')) },
+  { href: '/tasks?view=today', label: 'My Day', icon: Sun, match: (p, sp) => p === '/tasks' && (sp.get('view') === 'today' || (sp.get('view') === 'completed' && sp.get('from') === 'today')) },
+  { href: '/tasks?view=upcoming', label: 'Coming Up', icon: CalendarRange, match: (p, sp) => p === '/tasks' && (sp.get('view') === 'upcoming' || (sp.get('view') === 'completed' && sp.get('from') === 'upcoming')) },
+  { href: '/tasks', label: 'All tasks', icon: ListTodo, match: (p, sp) => p === '/tasks' && !sp.get('list') && !['today', 'upcoming'].includes(sp.get('view')) && !['today', 'upcoming'].includes(sp.get('from')) },
   { href: '/reminders', label: 'Reminders', icon: Bell },
   { href: '/finance', label: 'Money', icon: Wallet },
   { href: '/settings', label: 'Settings', icon: Settings },

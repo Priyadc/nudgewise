@@ -43,6 +43,12 @@ const VIEWS = {
   inbox: { title: 'No list', icon: FolderOpen, sub: 'Tasks that are not in a list yet' },
 };
 
+const BASE_TABS = {
+  today: { label: 'My Day', icon: Sun },
+  upcoming: { label: 'Coming Up', icon: CalendarRange },
+  all: { label: 'All tasks', icon: ListTodo },
+};
+
 const EMPTY = {
   today: { title: 'Your day is clear', text: 'Nothing due today. Enjoy it — or plan something below.' },
   upcoming: { title: 'Nothing planned yet', text: 'Give a task a date and it will line up here.' },
@@ -122,6 +128,14 @@ function TasksPageInner() {
   useEffect(() => {
     setView(sp.get('view') || 'all');
   }, [sp]);
+
+  // Which view "Done" belongs to (My Day → Done → back to My Day)
+  const fromParam = sp.get('from');
+  const baseView = view === 'completed' ? (BASE_TABS[fromParam] ? fromParam : 'all') : BASE_TABS[view] ? view : 'all';
+  const goView = (v) => {
+    if (v === 'completed') router.push(`/tasks?view=completed${baseView !== 'all' ? `&from=${baseView}` : ''}`);
+    else router.push(`/tasks${v === 'all' ? '' : `?view=${v}`}`);
+  };
 
   const load = useCallback(
     async (silent) => {
@@ -306,16 +320,32 @@ function TasksPageInner() {
 
       <div className="stack stack-lg">
         {!listId ? (
-          <Tabs
-            value={view}
-            onChange={(v) => router.push(`/tasks${v === 'all' ? '' : `?view=${v}`}`)}
-            tabs={[
-              { value: 'today', label: 'My Day', icon: Sun },
-              { value: 'upcoming', label: 'Coming Up', icon: CalendarRange },
-              { value: 'all', label: 'All', icon: ListTodo },
-              { value: 'completed', label: 'Done', icon: CircleCheck },
-            ]}
-          />
+          <>
+            {/* Desktop: the sidebar already switches views, so show just this view + Done */}
+            <div className="hide-mobile">
+              <Tabs
+                value={view === 'completed' ? 'completed' : baseView}
+                onChange={goView}
+                tabs={[
+                  { value: baseView, label: BASE_TABS[baseView].label, icon: BASE_TABS[baseView].icon },
+                  { value: 'completed', label: 'Done', icon: CircleCheck },
+                ]}
+              />
+            </div>
+            {/* Phone: no sidebar, so keep every view one tap away */}
+            <div className="show-mobile">
+              <Tabs
+                value={view}
+                onChange={goView}
+                tabs={[
+                  { value: 'today', label: 'My Day', icon: Sun },
+                  { value: 'upcoming', label: 'Coming Up', icon: CalendarRange },
+                  { value: 'all', label: 'All', icon: ListTodo },
+                  { value: 'completed', label: 'Done', icon: CircleCheck },
+                ]}
+              />
+            </div>
+          </>
         ) : (
           <Tabs
             value={view === 'completed' ? 'completed' : 'all'}
