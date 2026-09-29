@@ -42,6 +42,7 @@ import { getCategories, methodLabel, PAYMENT_METHODS } from '@/lib/categories';
 const METHOD_ICONS = { Smartphone, CreditCard, WalletCards, Banknote, Landmark, CircleDashed, card: WalletCards };
 const methodIcon = (v) => METHOD_ICONS[PAYMENT_METHODS.find((m) => m.value === v)?.icon] || (v === 'card' ? WalletCards : CircleDashed);
 import { formatMoney, relativeDay } from '@/lib/format';
+import { downloadXlsx } from '@/lib/xlsx';
 
 function monthKey(d = new Date()) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
@@ -55,18 +56,34 @@ function monthLabel(key) {
   return new Date(y, m - 1, 1).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
 }
 
-function exportCsv(rows, month) {
-  const header = ['Date', 'Type', 'Category', 'My amount', 'Paid with', 'Split total', 'Split with', 'Note'];
-  const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
-  const csv = [header, ...rows.map((t) => [new Date(t.date).toLocaleDateString('en-CA'), t.type, t.category, t.amount, methodLabel(t.method), t.split?.total ?? '', (t.split?.people || []).map((p) => `${p.name} ${p.share}`).join('; '), t.note])]
-    .map((r) => r.map(esc).join(','))
-    .join('\n');
-  const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `pockeazy-transactions-${month}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
+function exportExcel(rows, month) {
+  downloadXlsx(`pockeazy-money-${month}.xlsx`, [
+    {
+      name: monthLabel(month),
+      columns: [
+        { header: 'Date', width: 14, type: 'date' },
+        { header: 'Type', width: 10 },
+        { header: 'Category', width: 22 },
+        { header: 'Amount', width: 14, type: 'money' },
+        { header: 'Paid with', width: 14 },
+        { header: 'Note', width: 34 },
+        { header: 'Split total', width: 13, type: 'money' },
+        { header: 'Paid by', width: 14 },
+        { header: 'Split with', width: 34 },
+      ],
+      rows: rows.map((t) => [
+        t.date,
+        t.type === 'income' ? 'Income' : 'Expense',
+        t.category,
+        t.amount,
+        methodLabel(t.method),
+        t.note,
+        t.split?.total ?? '',
+        t.split ? (t.split.paidBy === 'me' ? 'Me' : t.split.paidBy) : '',
+        (t.split?.people || []).map((p) => `${p.name}: ${p.share}${p.settled ? ' (settled)' : ''}`).join(', '),
+      ]),
+    },
+  ]);
 }
 
 function FinanceInner() {
@@ -368,8 +385,8 @@ function FinanceInner() {
                         </option>
                       ))}
                     </select>
-                    <button className="btn btn-outline" onClick={() => exportCsv(txns || [], month)} disabled={!txns?.length}>
-                      <Download /> CSV
+                    <button className="btn btn-outline" onClick={() => exportExcel(txns || [], month)} disabled={!txns?.length}>
+                      <Download /> Excel
                     </button>
                   </div>
                   {!txns ? (

@@ -295,10 +295,10 @@ export default function SettingsPage() {
           )}
         </Section>
 
-        <Section icon={Download} title="Your data" text="Download everything you have stored in Pockeazy." delay={0.2}>
-          <a className="btn btn-outline" href="/api/user/export" download>
-            <Download /> Export as JSON
-          </a>
+        <Section icon={Download} title="Your data" text="Download everything in one Excel file — tasks, reminders, transactions, split bills, budgets and bills, each on its own sheet." delay={0.2}>
+          <button className="btn btn-outline" onClick={() => { window.location.href = `/api/user/export?tz=${new Date().getTimezoneOffset()}`; toast.success('Preparing your Excel file…'); }}>
+            <Download /> Download as Excel
+          </button>
         </Section>
 
         <Section icon={ShieldAlert} title="Danger zone" text="Deleting your account removes all lists, tasks, reminders and money records. This cannot be undone." delay={0.25}>
