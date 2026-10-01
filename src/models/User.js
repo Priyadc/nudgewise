@@ -11,10 +11,18 @@ const UserSchema = new mongoose.Schema(
       currency: { type: String, default: 'INR' },
       accent: { type: String, default: 'violet' },
       timezone: { type: String, default: 'Asia/Kolkata' },
-      emailReminders: { type: Boolean, default: true },
+      // Pop-ups on phone/computer by default; email is opt-in
+      emailReminders: { type: Boolean, default: false },
       pushReminders: { type: Boolean, default: true },
+      // Sunday-evening "your week" push
+      weeklyRecap: { type: Boolean, default: true },
+      // Salary-day plan: expected monthly income and % to put aside
+      monthlyIncome: { type: Number, default: 0, min: 0 },
+      savePercent: { type: Number, default: 20, min: 0, max: 90 },
       onboarded: { type: Boolean, default: false },
     },
+    // Day key ('YYYY-MM-DD', the Sunday) of the last weekly recap sent, so it goes out once
+    lastRecapWeek: { type: String, default: null },
     resetTokenHash: { type: String, select: false },
     resetTokenExpires: { type: Date, select: false },
     // Money categories the user created themselves
@@ -41,6 +49,7 @@ UserSchema.set('toJSON', {
     delete ret.password;
     delete ret.resetTokenHash;
     delete ret.resetTokenExpires;
+    delete ret.lastRecapWeek;
     delete ret.__v;
     return ret;
   },

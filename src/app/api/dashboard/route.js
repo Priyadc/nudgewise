@@ -4,6 +4,7 @@ import { taskScope } from '@/lib/access';
 import { monthBounds, currentMonthKey, shiftMonth } from '@/lib/months';
 import { computeStreak } from '@/lib/streak';
 import { nextBillDue } from '@/lib/recurrence';
+import { buildMoneyPlan, buildNoSpend } from '@/lib/money-plan';
 import Task from '@/models/Task';
 import Reminder from '@/models/Reminder';
 import Transaction from '@/models/Transaction';
@@ -26,7 +27,7 @@ export const GET = route(async (req, { userId }) => {
   const prev = monthBounds(shiftMonth(monthKey, -2), tz);
   const streakFrom = new Date(dayStart.getTime() - 120 * 86400000);
 
-  const [today, overdue, doneToday, completedWeek, totalOpen, reminders, money, topCats, budgets, bills, weekly, lastMonthAgg, prevMonthAgg, streakDays] =
+  const [today, overdue, doneToday, completedWeek, totalOpen, reminders, money, topCats, budgets, bills, weekly, lastMonthAgg, prevMonthAgg, streakDays, plan, noSpend] =
     await Promise.all([
       Task.find({ $and: [scope, { done: false, dueDate: { $ne: null, $lt: dayEnd } }] })
         .sort({ dueDate: 1, priority: -1 })
@@ -60,6 +61,8 @@ export const GET = route(async (req, { userId }) => {
         { $match: { $and: [scope, { completedAt: { $gte: streakFrom } }] } },
         { $group: { _id: { $dateToString: { format: '%Y-%m-%d', date: '$completedAt', timezone: offsetString(tz) } } } },
       ]),
+      buildMoneyPlan(userId, tz),
+      buildNoSpend(userId, tz),
     ]);
 
   const income = money.find((m) => m._id === 'income')?.total || 0;
@@ -90,6 +93,8 @@ export const GET = route(async (req, { userId }) => {
       .slice(0, 4),
     activity,
     streak: computeStreak(streakDays.map((d) => d._id), tz),
+    plan,
+    noSpend,
     lastMonth: { key: shiftMonth(monthKey, -1), ...lastMonthAgg, previousExpense: prevMonthAgg.expense },
   });
 });

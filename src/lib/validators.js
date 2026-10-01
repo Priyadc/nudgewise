@@ -34,6 +34,7 @@ export const taskCreateSchema = z.object({
   tags: tags.optional(),
   subtasks: z.array(z.object({ title: z.string().trim().min(1).max(200), done: z.boolean().optional() })).max(50).optional(),
   assignee: objectId.nullable().optional(),
+  price: z.number().min(0).max(1e9).nullable().optional(),
 });
 
 export const taskUpdateSchema = taskCreateSchema.partial().extend({
@@ -45,6 +46,7 @@ export const listSchema = z.object({
   name: z.string().trim().min(1, 'Name is required').max(60),
   color: z.string().regex(/^#[0-9a-f]{6}$/i).optional(),
   icon: z.string().max(8).optional(),
+  kind: z.enum(['tasks', 'shopping']).optional(),
 });
 
 export const reminderSchema = z.object({
@@ -128,6 +130,9 @@ export const settingsSchema = z.object({
       emailReminders: z.boolean().optional(),
       pushReminders: z.boolean().optional(),
       onboarded: z.boolean().optional(),
+      weeklyRecap: z.boolean().optional(),
+      monthlyIncome: z.coerce.number().min(0).max(1e11).optional(),
+      savePercent: z.coerce.number().int().min(0).max(90).optional(),
     })
     .optional(),
 });

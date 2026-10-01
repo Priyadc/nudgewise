@@ -1,6 +1,9 @@
-# Optional backup scheduler for reminders (free).
-# GitHub runs schedules every 5 minutes at best, and can be a few minutes late,
-# so cron-job.org (every minute) is the recommended primary scheduler.
+# Manual test for the reminder endpoint (Actions → Send due reminders → Run workflow).
+# The automatic 5-minute schedule is turned off: cron-job.org (every minute) is the
+# scheduler, and a failing schedule here only sent "All jobs have failed" emails.
+# To use GitHub as a backup scheduler again, add back:
+#   schedule:
+#     - cron: '*/5 * * * *'
 #
 # Setup: repo → Settings → Secrets and variables → Actions → add
 #   APP_URL      e.g. https://pockeazy-yourname.vercel.app
@@ -8,8 +11,6 @@
 name: Send due reminders
 
 on:
-  schedule:
-    - cron: '*/5 * * * *'
   workflow_dispatch:
 
 jobs:
@@ -19,5 +20,9 @@ jobs:
     steps:
       - name: Trigger reminder delivery
         run: |
+          if [ -z "${{ secrets.APP_URL }}" ] || [ -z "${{ secrets.CRON_SECRET }}" ]; then
+            echo "::error::Add APP_URL and CRON_SECRET under Settings → Secrets and variables → Actions"
+            exit 1
+          fi
           curl -fsS -X POST "${{ secrets.APP_URL }}/api/cron/reminders" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"

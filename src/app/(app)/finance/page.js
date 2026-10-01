@@ -20,6 +20,7 @@ import {
   CircleCheck,
   Pencil,
   CalendarClock,
+  CalendarRange,
   Undo2,
   Trash2,
   UsersRound,
@@ -37,6 +38,7 @@ import { SpendingDonut, TrendBars } from '@/components/finance/Charts';
 import { TransactionModal, BudgetModal, BillModal, deleteTransaction } from '@/components/finance/FinanceModals';
 import SplitsPanel from '@/components/finance/SplitsPanel';
 import GoalsPanel from '@/components/finance/Goals';
+import CashCalendar from '@/components/finance/CashCalendar';
 import MoneyLock from '@/components/finance/MoneyLock';
 import Examples from '@/components/ui/Examples';
 import { moneyExamples } from '@/lib/client/examples';
@@ -251,6 +253,7 @@ function FinanceInner() {
             { value: 'splits', label: 'Splits', icon: UsersRound },
             { value: 'goals', label: 'Goals', icon: PiggyBank },
             { value: 'bills', label: 'Bills', icon: CalendarClock, count: bills?.filter((b) => b.next.status !== 'upcoming' && !b.autopay).length },
+            { value: 'calendar', label: 'Cash calendar', icon: CalendarRange },
           ]}
         />
 
@@ -515,6 +518,8 @@ function FinanceInner() {
               )}
 
               {tab === 'goals' && <GoalsPanel currency={currency} />}
+
+              {tab === 'calendar' && <CashCalendar currency={currency} onAddBill={() => setBillModal({})} />}
 
               {tab === 'splits' && <SplitsPanel currency={currency} onSplit={() => openSheet('money', { type: 'expense', split: true })} />}
 

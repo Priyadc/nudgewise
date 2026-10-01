@@ -1,6 +1,6 @@
 import { route, ok, readJson, HttpError, dateParam } from '@/lib/api';
 import { taskCreateSchema } from '@/lib/validators';
-import { requireList, taskScope } from '@/lib/access';
+import { accessibleListIds, requireList, taskScope } from '@/lib/access';
 import { syncTaskReminder } from '@/lib/reminders';
 import Task from '@/models/Task';
 
@@ -50,7 +50,11 @@ export const GET = route(async (req, { userId }) => {
       and.push({ owner: userId, list: null, done: false });
       break;
     default:
-      if (sp.get('includeDone') !== '1') and.push({ done: false });
+      // Shopping lists also show items ticked during the current trip (?doneSince=<ISO>)
+      if (sp.get('doneSince') !== null) {
+        const since = dateParam(sp, 'doneSince', new Date(0));
+        and.push({ $or: [{ done: false }, { done: true, completedAt: { $gte: since } }] });
+      } else if (sp.get('includeDone') !== '1') and.push({ done: false });
   }
 
   if (q) {
@@ -71,11 +75,35 @@ export const GET = route(async (req, { userId }) => {
 
 export const POST = route(async (req, { userId }) => {
   const body = taskCreateSchema.parse(await readJson(req));
-  if (body.list) await requireList(body.list, userId, 'editor');
+  const target = body.list ? (await requireList(body.list, userId, 'editor')).list : null;
   if (body.assignee && !body.list) throw new HttpError(400, 'Only tasks in shared lists can be assigned');
+
+  // Shopping lists remember what an item cost last time
+  let priceRemembered = false;
+  if (target?.kind === 'shopping' && (body.price === undefined || body.price === null)) {
+    const last = await lastPrice(body.title, userId);
+    if (last !== null) {
+      body.price = last;
+      priceRemembered = true;
+    }
+  }
 
   const task = await Task.create({ ...body, owner: userId });
   await syncTaskReminder(task);
   const populated = await Task.findById(task._id).populate(POPULATE).lean();
-  return ok({ task: populated }, 201);
+  return ok({ task: populated, priceRemembered }, 201);
 });
+
+/** Most recent price paid for an item with the same name, in any list the user can see */
+async function lastPrice(title, userId) {
+  const ids = await accessibleListIds(userId);
+  const prev = await Task.findOne({
+    list: { $in: ids },
+    title: new RegExp(`^${escapeRegex(title.trim())}$`, 'i'),
+    price: { $ne: null },
+  })
+    .sort({ updatedAt: -1 })
+    .select('price')
+    .lean();
+  return prev ? prev.price : null;
+}

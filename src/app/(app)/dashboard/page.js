@@ -25,6 +25,7 @@ import TaskDrawer from '@/components/tasks/TaskDrawer';
 import CategoryIcon from '@/components/ui/CategoryIcon';
 import { AnimatedNumber, EmptyState, Progress, Skeleton } from '@/components/ui/Controls';
 import { ActivityBars } from '@/components/finance/Charts';
+import { SafeToSpendCard } from '@/components/finance/MoneyPlan';
 import { api, emit, on, todayParams } from '@/lib/client/api';
 import { formatMoney, formatTime, greeting, relativeDay } from '@/lib/format';
 import { ymd } from '@/lib/when';
@@ -168,6 +169,16 @@ export default function DashboardPage() {
                 {!data.streak.doneToday && <span className="tiny" style={{ opacity: 0.85 }}> · finish one task today to keep it</span>}
               </motion.div>
             )}
+            {data.noSpend && (data.noSpend.count > 0 || data.noSpend.week > 0) && (
+              <motion.div className="streak-chip" style={{ marginLeft: data.streak?.count > 0 ? 8 : 0 }} initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 300, damping: 14, delay: 0.4 }}>
+                <span className="flame">💸</span>
+                {data.noSpend.count > 1
+                  ? `${data.noSpend.count} no-spend days in a row`
+                  : data.noSpend.todayClean
+                    ? 'No spends today so far'
+                    : `${data.noSpend.week} no-spend day${data.noSpend.week > 1 ? 's' : ''} this week`}
+              </motion.div>
+            )}
             <div className="row row-wrap" style={{ marginTop: 18, gap: 8 }}>
               <button className="btn" style={{ background: '#fff', color: '#1e1b4b' }} onClick={() => openSheet('task', { date: ymd(new Date()) })}>
                 <Plus /> Add task
@@ -225,6 +236,8 @@ export default function DashboardPage() {
           hint="See where your money went"
         />
       </div>
+
+      <SafeToSpendCard plan={data.plan} variants={item} />
 
       <MonthReview data={data.lastMonth} money={money} />
 

@@ -20,6 +20,7 @@ import {
   Sparkles,
   Sun,
   ArrowLeft,
+  ShoppingCart,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import TaskItem from '@/components/tasks/TaskItem';
@@ -38,6 +39,8 @@ import { ymd } from '@/lib/when';
 import { celebrateDayCleared, isMyDay } from '@/lib/client/celebrate';
 import Examples from '@/components/ui/Examples';
 import { taskExamples } from '@/lib/client/examples';
+import { parsePrice } from '@/lib/money-math';
+import { formatMoney } from '@/lib/format';
 
 const VIEWS = {
   today: { title: 'My Day', icon: Sun, sub: 'What needs you today — plus anything that slipped' },
@@ -112,9 +115,12 @@ function TasksPageInner() {
   const listId = sp.get('list');
   const openTaskId = sp.get('task');
   const [view, setView] = useState(sp.get('view') || 'all');
-  const { lists, setLists, openSheet } = useApp();
+  const { lists, setLists, openSheet, currency } = useApp();
   const list = lists.find((l) => l._id === listId);
   const readOnly = list?.role === 'viewer';
+  const shopping = list?.kind === 'shopping';
+  const tripStartedAt = list?.tripStartedAt || null;
+  const [checkingOut, setCheckingOut] = useState(false);
 
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -147,6 +153,8 @@ function TasksPageInner() {
       const params = todayParams();
       params.set('view', listId && view !== 'completed' ? 'all' : view);
       if (listId) params.set('list', listId);
+      // Shopping lists keep ticked items visible as the cart until the trip is finished
+      if (shopping && view !== 'completed') params.set('doneSince', tripStartedAt || new Date(0).toISOString());
       if (q.trim()) params.set('q', q.trim());
       if (priority) params.set('priority', priority);
       try {
@@ -159,7 +167,7 @@ function TasksPageInner() {
         setLoading(false);
       }
     },
-    [listId, view, q, priority, router]
+    [listId, view, q, priority, router, shopping, tripStartedAt]
   );
 
   useEffect(() => {
@@ -189,6 +197,8 @@ function TasksPageInner() {
         toast.success('Done! Next one scheduled', { description: relativeDay(d.task.dueDate) });
         return;
       }
+      // Shopping lists: ticked items stay in the cart
+      if (shopping && view !== 'completed') return;
       // Let the check animation play, then remove it from open views
       if (done && view !== 'completed') setTimeout(() => setTasks((ts) => ts.filter((t) => t._id !== task._id)), 450);
       if (!done && view === 'completed') setTasks((ts) => ts.filter((t) => t._id !== task._id));
@@ -212,16 +222,19 @@ function TasksPageInner() {
 
   async function quickAdd(e) {
     e.preventDefault();
-    const p = parseTask(text);
+    // "Milk ₹45" in a shopping list → item "Milk" priced ₹45
+    const priced = shopping ? parsePrice(text) : { title: text, price: null };
+    const p = parseTask(priced.title);
     if (!p.title) return;
     setAdding(true);
     try {
       const target = listId || lists.find((l) => l.name.toLowerCase() === p.listName?.toLowerCase())?._id || null;
       let dueDate = p.dueDate;
       if (!dueDate && view === 'today') dueDate = new Date(new Date().setHours(23, 59, 0, 0));
-      await api('/api/tasks', {
+      const created = await api('/api/tasks', {
         method: 'POST',
         body: {
+          ...(shopping && priced.price !== null ? { price: priced.price } : {}),
           title: p.title,
           dueDate,
           hasTime: p.hasTime,
@@ -234,10 +247,27 @@ function TasksPageInner() {
       });
       setText('');
       emit('tasks-changed');
+      if (created?.priceRemembered) toast(`Remembered ${formatMoney(created.task.price, currency)} from last time`, { description: created.task.title });
     } catch (err) {
       toast.error(err.message);
     } finally {
       setAdding(false);
+    }
+  }
+
+  async function checkout(logExpense) {
+    setCheckingOut(true);
+    try {
+      const d = await api(`/api/lists/${listId}/checkout`, { method: 'POST', body: { logExpense } });
+      setLists((ls) => ls.map((l) => (l._id === listId ? { ...l, tripStartedAt: d.tripStartedAt } : l)));
+      if (d.transaction) {
+        toast.success(`${formatMoney(d.total, currency)} added to Groceries`, { description: `${d.count} item${d.count === 1 ? '' : 's'} from ${list.name}` });
+        emit('money-changed');
+      } else toast.success('Cart cleared', { description: 'Ticked items moved to Done' });
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setCheckingOut(false);
     }
   }
 
@@ -254,7 +284,21 @@ function TasksPageInner() {
   }
 
   const sorted = useMemo(() => sortTasks(tasks, sort), [tasks, sort]);
-  const groups = useMemo(() => (sort === 'due' ? groupTasks(sorted, listId ? (view === 'completed' ? 'completed' : 'all') : view) : [{ key: 'all', title: null, items: sorted }]), [sorted, sort, view, listId]);
+  const groups = useMemo(() => {
+    if (shopping && view !== 'completed') {
+      return [
+        { key: 'to-buy', title: null, items: sorted.filter((t) => !t.done) },
+        { key: 'cart', title: '🛒 In your cart', items: sorted.filter((t) => t.done) },
+      ].filter((g) => g.items.length);
+    }
+    return sort === 'due' ? groupTasks(sorted, listId ? (view === 'completed' ? 'completed' : 'all') : view) : [{ key: 'all', title: null, items: sorted }];
+  }, [sorted, sort, view, listId, shopping]);
+  const cart = useMemo(() => {
+    if (!shopping) return null;
+    const priced = (ts) => ts.reduce((s, t) => s + (t.price || 0), 0);
+    const inCart = tasks.filter((t) => t.done);
+    return { cart: priced(inCart), all: priced(tasks), count: inCart.length, open: tasks.length - inCart.length, unpriced: tasks.filter((t) => t.price === null || t.price === undefined).length };
+  }, [tasks, shopping]);
   const meta = VIEWS[view] || VIEWS.all;
   const preview = text ? parseTask(text) : null;
   const overdueCount = tasks.filter((t) => !t.done && t.dueDate && new Date(t.dueDate) < new Date(new Date().setHours(0, 0, 0, 0))).length;
@@ -375,7 +419,7 @@ function TasksPageInner() {
               <input
                 value={text}
                 onChange={(e) => setText(e.target.value)}
-                placeholder={`Quick add${list ? ` to ${list.name}` : ''} — try "Pay rent friday 10am !high"`}
+                placeholder={shopping ? `Add to ${list.name} — try "Milk ₹45" or just "Eggs"` : `Quick add${list ? ` to ${list.name}` : ''} — try "Pay rent friday 10am !high"`}
                 aria-label="New task"
               />
               <VoiceButton className="btn btn-ghost btn-icon btn-sm" onText={(t) => setText((p) => (p ? `${p} ${t}` : t))} onInterim={setInterim} />
@@ -400,6 +444,34 @@ function TasksPageInner() {
               )}
             </AnimatePresence>
           </div>
+        )}
+
+        {cart && view !== 'completed' && tasks.length > 0 && (
+          <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="card card-pad shop-bar">
+            <div className="row" style={{ gap: 12 }}>
+              <span className="stat-icon" style={{ width: 42, height: 42 }}>
+                <ShoppingCart />
+              </span>
+              <div className="grow" style={{ minWidth: 0 }}>
+                <div className="tiny muted">In your cart · {cart.count} item{cart.count === 1 ? '' : 's'}</div>
+                <div className="shop-total num">{formatMoney(cart.cart, currency)}</div>
+                <div className="tiny faint">
+                  Whole list ≈ {formatMoney(cart.all, currency)}
+                  {cart.unpriced > 0 ? ` · ${cart.unpriced} without a price` : ''}
+                </div>
+              </div>
+            </div>
+            {!readOnly && cart.count > 0 && (
+              <div className="row row-wrap" style={{ gap: 8 }}>
+                <button className="btn btn-primary btn-sm" disabled={checkingOut} onClick={() => checkout(true)}>
+                  {checkingOut ? <Loader2 className="spin" /> : <CircleCheck />} Done shopping{cart.cart > 0 ? ` · log ${formatMoney(cart.cart, currency)}` : ''}
+                </button>
+                <button className="btn btn-ghost btn-sm" disabled={checkingOut} onClick={() => checkout(false)}>
+                  Clear cart
+                </button>
+              </div>
+            )}
+          </motion.div>
         )}
 
         <div className="row row-wrap" style={{ gap: 8 }}>
@@ -442,7 +514,18 @@ function TasksPageInner() {
                 <div className="task-list">
                   <AnimatePresence initial={false} mode="popLayout">
                     {g.items.map((t) => (
-                      <TaskItem key={t._id} task={t} onToggle={toggle} onOpen={setActive} onDeleted={(id) => setTasks((ts) => ts.filter((x) => x._id !== id))} showList={!listId} readOnly={readOnly} />
+                      <TaskItem
+                        key={t._id}
+                        task={t}
+                        onToggle={toggle}
+                        onOpen={setActive}
+                        onDeleted={(id) => setTasks((ts) => ts.filter((x) => x._id !== id))}
+                        showList={!listId}
+                        readOnly={readOnly}
+                        shopping={shopping}
+                        currencySymbol={currencySymbol(currency)}
+                        onChanged={(nt) => setTasks((ts) => ts.map((x) => (x._id === nt._id ? { ...x, price: nt.price } : x)))}
+                      />
                     ))}
                   </AnimatePresence>
                 </div>
@@ -474,6 +557,14 @@ function TasksPageInner() {
       />
     </>
   );
+}
+
+function currencySymbol(code) {
+  try {
+    return (0).toLocaleString('en', { style: 'currency', currency: code, maximumFractionDigits: 0 }).replace(/[\d\s.,]/g, '') || code;
+  } catch {
+    return code;
+  }
 }
 
 export default function TasksPage() {

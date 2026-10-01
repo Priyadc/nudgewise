@@ -24,6 +24,8 @@ const TaskSchema = new mongoose.Schema(
     repeat: { type: String, enum: ['none', 'daily', 'weekly', 'monthly', 'yearly'], default: 'none' },
     tags: { type: [String], default: [] },
     subtasks: { type: [SubtaskSchema], default: [] },
+    // Shopping lists: price of the item (remembered for next time)
+    price: { type: Number, min: 0, default: null },
     assignee: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
     order: { type: Number, default: 0 },
   },
