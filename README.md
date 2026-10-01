@@ -45,7 +45,7 @@ Everything else (Google, images, push, email) is optional and switches on when i
    - Schedule: every 1 minute · Method: POST
    - Header: `Authorization: Bearer YOUR_CRON_SECRET`
 
-   (Alternatively use the GitHub Action in `.github/workflows/reminders.yml`, every 5 minutes.)
+   (`.github/workflows/reminders.yml` can test the endpoint by hand from the Actions tab; its 5-minute schedule is off.)
    In-app reminders also fire whenever the app is open, even without a scheduler.
 
 ## 4. Install on your phone
@@ -69,7 +69,18 @@ src/
 public/        manifest.json, sw.js (push + offline), icons
 ```
 
-## 6. Keyboard & power-user tips
+## 6. Money smarts
+
+- **Safe to spend today** (dashboard) — salary − bills still due − savings − spent so far, spread over the days left in the month.
+- **Salary-day plan** — opens after you log a *Salary* entry (or from the dashboard): bills first, savings % next, and what's free per day. Can move the savings straight into a goal.
+- **Cash calendar** (Money → Cash calendar) — next 5 weeks of bills and salary with the expected balance each day, and a warning if money may run short.
+- **Shopping lists** — turn on "Shopping list" when creating a list (auto-on for names like *Groceries*). Prices are remembered for next time (`Milk ₹45` sets one), ticked items add up as your cart, and **Done shopping** logs the total as a Groceries expense.
+- **No-spend streak** — days in a row without everyday spending (bill payments and savings don't count).
+- **Sunday recap** — a push every Sunday at 7 pm: spent vs last week, no-spend days and tasks done (Settings → Notifications).
+
+Reminders are push/in-app by default; email is opt-in from Settings.
+
+## 7. Keyboard & power-user tips
 
 - `N` or `Ctrl/⌘ + K` → quick add (task, reminder or money)
 - Natural language: `Pay rent tomorrow 9am !high #home every month @Personal`

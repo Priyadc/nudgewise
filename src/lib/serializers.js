@@ -9,6 +9,8 @@ export function serializeList(list, userId, pending = 0) {
     name: obj.name,
     color: obj.color,
     icon: obj.icon,
+    kind: obj.kind || 'tasks',
+    tripStartedAt: obj.tripStartedAt || null,
     owner: obj.owner,
     members: obj.members,
     role,

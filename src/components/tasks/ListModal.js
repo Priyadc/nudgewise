@@ -7,6 +7,8 @@ import { toast } from 'sonner';
 import { Modal } from '@/components/ui/Modal';
 import { api, emit } from '@/lib/client/api';
 import { LIST_COLORS, LIST_ICONS } from '@/lib/categories';
+import { Switch } from '@/components/ui/Controls';
+import { looksLikeShopping } from '@/lib/money-math';
 
 /** Create or edit a list (name, colour, emoji) */
 export default function ListModal({ open, onClose, list, onSaved }) {
@@ -14,12 +16,16 @@ export default function ListModal({ open, onClose, list, onSaved }) {
   const [color, setColor] = useState(LIST_COLORS[0]);
   const [icon, setIcon] = useState(LIST_ICONS[0]);
   const [saving, setSaving] = useState(false);
+  const [shopping, setShopping] = useState(false);
+  const [kindTouched, setKindTouched] = useState(false);
 
   useEffect(() => {
     if (open) {
       setName(list?.name || '');
       setColor(list?.color || LIST_COLORS[0]);
       setIcon(list?.icon || LIST_ICONS[0]);
+      setShopping(list?.kind === 'shopping');
+      setKindTouched(Boolean(list));
     }
   }, [open, list]);
 
@@ -28,9 +34,10 @@ export default function ListModal({ open, onClose, list, onSaved }) {
     if (!name.trim()) return;
     setSaving(true);
     try {
+      const kind = shopping ? 'shopping' : 'tasks';
       const d = list
-        ? await api(`/api/lists/${list._id}`, { method: 'PATCH', body: { name, color, icon } })
-        : await api('/api/lists', { method: 'POST', body: { name, color, icon } });
+        ? await api(`/api/lists/${list._id}`, { method: 'PATCH', body: { name, color, icon, kind } })
+        : await api('/api/lists', { method: 'POST', body: { name, color, icon, kind } });
       toast.success(list ? 'List updated' : 'List created');
       emit('lists-changed');
       onSaved?.(d.list);
@@ -58,7 +65,11 @@ export default function ListModal({ open, onClose, list, onSaved }) {
             <label className="label" htmlFor="list-name">
               Name
             </label>
-            <input id="list-name" className="input" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Groceries, Trip to Goa" autoFocus maxLength={60} />
+            <input id="list-name" className="input" value={name} onChange={(e) => {
+                setName(e.target.value);
+                // New lists called "Groceries", "Shopping"… become shopping lists unless the user decides otherwise
+                if (!kindTouched) setShopping(looksLikeShopping(e.target.value));
+              }} placeholder="e.g. Groceries, Trip to Goa" autoFocus maxLength={60} />
           </div>
         </div>
         <div className="field">
@@ -87,6 +98,20 @@ export default function ListModal({ open, onClose, list, onSaved }) {
               </button>
             ))}
           </div>
+        </div>
+        <div className="setting-row" style={{ padding: 0, border: 0 }}>
+          <div>
+            <div className="bold small">🛒 Shopping list</div>
+            <div className="tiny muted">Remembers what each item cost and adds up your cart as you tick things off.</div>
+          </div>
+          <Switch
+            checked={shopping}
+            onChange={(v) => {
+              setShopping(v);
+              setKindTouched(true);
+            }}
+            label="Shopping list"
+          />
         </div>
         <div className="row" style={{ justifyContent: 'flex-end' }}>
           <button type="button" className="btn btn-ghost" onClick={onClose}>

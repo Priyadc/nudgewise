@@ -1,7 +1,10 @@
 import Reminder from '@/models/Reminder';
 import Bill from '@/models/Bill';
 import Transaction from '@/models/Transaction';
+import User from '@/models/User';
 import { deliver } from '@/lib/notify';
+import { buildWeekRecap, zoneOffset } from '@/lib/money-plan';
+import { addDays, dayKey, dayStartOf } from '@/lib/money-math';
 import { nextFutureOccurrence, nextBillDue } from '@/lib/recurrence';
 
 /**
@@ -81,7 +84,8 @@ export async function processDueReminders({ userId } = {}) {
 
   const bills = await processBillAlerts({ userId, now });
   const autopaid = await processAutopay({ userId, now });
-  return { reminders: sent, bills, autopaid };
+  const recaps = await processWeeklyRecaps({ userId, now });
+  return { reminders: sent, bills, autopaid, recaps };
 }
 
 /** Sends a one-time alert for each unpaid bill that enters its reminder window */
@@ -154,4 +158,59 @@ export async function processAutopay({ userId, now = new Date() } = {}) {
     );
   }
   return logged;
+}
+
+const RECAP_HOUR = 19; // Sunday 7 pm in the user's time zone
+
+/**
+ * Sunday-evening "your week" push: money spent vs last week, no-spend days and tasks done.
+ * Sent once per week per user (claimed atomically), only to people who log something.
+ */
+export async function processWeeklyRecaps({ userId, now = new Date() } = {}) {
+  // Sunday 7 pm somewhere between UTC−12 and UTC+14 falls on a UTC Sat, Sun or Mon
+  if (![6, 0, 1].includes(now.getUTCDay())) return 0;
+  const q = { 'settings.weeklyRecap': { $ne: false } };
+  if (userId) q._id = userId;
+  const users = await User.find(q).select('settings lastRecapWeek').limit(2000).lean();
+  let sent = 0;
+
+  for (const u of users) {
+    const tz = zoneOffset(u.settings?.timezone || 'Asia/Kolkata', now);
+    const local = new Date(now.getTime() - tz * 60000);
+    if (local.getUTCDay() !== 0 || local.getUTCHours() < RECAP_HOUR) continue;
+    const sunday = dayKey(now, tz);
+    if (u.lastRecapWeek === sunday) continue;
+
+    const weekStart = dayStartOf(addDays(sunday, -6), tz);
+    const weekEnd = dayStartOf(addDays(sunday, 1), tz);
+    const r = await buildWeekRecap(u._id, tz, weekStart, weekEnd);
+    if (!r.logged && !r.tasksDone) continue; // nothing to talk about this week
+
+    const claimed = await User.updateOne({ _id: u._id, lastRecapWeek: { $ne: sunday } }, { $set: { lastRecapWeek: sunday } });
+    if (!claimed.modifiedCount) continue;
+
+    const cur = u.settings?.currency || 'INR';
+    const money = (v) => formatAmount(v, cur);
+    const bits = [];
+    if (r.logged) {
+      let spent = `Spent ${money(r.spent)}`;
+      if (r.changePct !== null && r.changePct !== 0) spent += ` (${r.changePct < 0 ? '↓' : '↑'}${Math.abs(r.changePct)}% vs last week)`;
+      bits.push(spent);
+      if (r.noSpendDays > 0) bits.push(`${r.noSpendDays} no-spend day${r.noSpendDays > 1 ? 's' : ''}${r.noSpendDays >= 3 ? ' 🔥' : ''}`);
+    }
+    if (r.tasksDone) bits.push(`${r.tasksDone} task${r.tasksDone > 1 ? 's' : ''} done`);
+    const title = r.changePct !== null && r.changePct < 0 ? 'Nice week — you spent less! 🌟' : 'Your week in Pockeazy 🌟';
+
+    await deliver(u._id, { title, body: bits.join(' · '), url: '/dashboard', type: 'system' }, { inApp: true, push: true, email: false });
+    sent += 1;
+  }
+  return sent;
+}
+
+function formatAmount(v, currency) {
+  try {
+    return new Intl.NumberFormat(currency === 'INR' ? 'en-IN' : 'en', { style: 'currency', currency, maximumFractionDigits: 0 }).format(v || 0);
+  } catch {
+    return `${currency} ${Math.round(v || 0)}`;
+  }
 }

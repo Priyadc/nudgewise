@@ -200,6 +200,7 @@ export function TransactionModal({ open, onClose, txn, currency, defaultType = '
       } else toast.success(txn ? 'Updated' : `${form.type === 'income' ? 'Income' : 'Expense'} of ${formatMoney(amount, currency)} added`);
       emit('money-changed');
       onClose();
+      if (!txn && form.type === 'income' && form.category === 'Salary') emit('salary-logged', amount);
     } catch (err) {
       toast.error(err.message);
     } finally {

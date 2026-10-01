@@ -16,6 +16,10 @@ const ListSchema = new mongoose.Schema(
     icon: { type: String, default: '📋', maxlength: 8 },
     owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     members: { type: [MemberSchema], default: [] },
+    // 'shopping' lists remember prices and show a running cart total
+    kind: { type: String, enum: ['tasks', 'shopping'], default: 'tasks' },
+    // Ticked items since this time make up the current shopping trip's cart
+    tripStartedAt: { type: Date, default: null },
     shareEnabled: { type: Boolean, default: false },
     shareToken: { type: String, index: true, sparse: true },
     shareRole: { type: String, enum: ['viewer', 'editor'], default: 'editor' },

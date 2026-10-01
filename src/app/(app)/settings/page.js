@@ -6,7 +6,7 @@ import { logout } from '@/lib/client/session';
 import { DisplaySettings, MoneyLockSettings } from '@/components/settings/ComfortSettings';
 import { useTheme } from 'next-themes';
 import { motion } from 'framer-motion';
-import { Bell, Check, Download, Globe, Laptop, Loader2, LogOut, Mail, Monitor, Moon, Palette, Smartphone, Sun, Trash2, UserRound, Coins, ShieldAlert, Tags } from 'lucide-react';
+import { Bell, Check, Download, Globe, Laptop, Loader2, LogOut, Mail, Monitor, Moon, Palette, Smartphone, Sparkles, Sun, Trash2, UserRound, Coins, ShieldAlert, Tags } from 'lucide-react';
 import { toast } from 'sonner';
 import { useApp } from '@/components/layout/AppContext';
 import { Avatar, Switch } from '@/components/ui/Controls';
@@ -260,9 +260,18 @@ export default function SettingsPage() {
               <div className="bold small row" style={{ gap: 6 }}>
                 <Mail size={16} /> Email reminders
               </div>
-              <div className="tiny muted">For bills and task reminders (and any reminder with email turned on).</div>
+              <div className="tiny muted">Off by default — reminders pop up on your phone and computer instead. Turn on to also get them by email.</div>
             </div>
             <Switch checked={s.emailReminders !== false} onChange={(v) => setSetting('emailReminders', v, v ? 'Email reminders on' : 'Email reminders off')} label="Email reminders" />
+          </div>
+          <div className="setting-row">
+            <div>
+              <div className="bold small row" style={{ gap: 6 }}>
+                <Sparkles size={16} /> Sunday recap
+              </div>
+              <div className="tiny muted">Every Sunday at 7 pm: what you spent vs last week, no-spend days and tasks done.</div>
+            </div>
+            <Switch checked={s.weeklyRecap !== false} onChange={(v) => setSetting('weeklyRecap', v, v ? 'Sunday recap on' : 'Sunday recap off')} label="Sunday recap" />
           </div>
         </Section>
 

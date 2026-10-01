@@ -95,6 +95,7 @@ export default function QuickAdd() {
         });
         toast.success(txn.type === 'income' ? 'Income added' : 'Expense added', { description: `${formatMoney(txn.amount, currency)} · ${txn.category}` });
         emit('money-changed');
+        if (txn.type === 'income' && txn.category === 'Salary') emit('salary-logged', txn.amount);
       }
       setText('');
       closeQuickAdd();

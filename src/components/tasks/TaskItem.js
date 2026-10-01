@@ -1,12 +1,13 @@
 'use client';
 
-import { forwardRef } from 'react';
+import { forwardRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Bell, CalendarDays, Check, ListChecks, Pencil, Repeat, Hash, Trash2 } from 'lucide-react';
 import { api, emit } from '@/lib/client/api';
 import { deleteWithUndo } from '@/lib/client/undo';
 import { formatTime, relativeDay } from '@/lib/format';
 import { Avatar } from '@/components/ui/Controls';
+import { toast } from 'sonner';
 
 export function TaskCheck({ done, priority = 0, onToggle, label }) {
   return (
@@ -42,7 +43,7 @@ function dueTone(task) {
 }
 
 /** One task in a list. Clicking opens the detail drawer. */
-const TaskItem = forwardRef(function TaskItem({ task, onToggle, onOpen, onDeleted, showList = true, readOnly }, ref) {
+const TaskItem = forwardRef(function TaskItem({ task, onToggle, onOpen, onDeleted, showList = true, readOnly, shopping, currencySymbol = '₹', onChanged }, ref) {
   function remove() {
     deleteTask(task, onDeleted);
   }
@@ -118,6 +119,7 @@ const TaskItem = forwardRef(function TaskItem({ task, onToggle, onOpen, onDelete
           )}
         </div>
       </div>
+      {shopping && <PriceTag task={task} symbol={currencySymbol} readOnly={readOnly} onChanged={onChanged} />}
       {!readOnly && (
         <div className="task-actions" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
           <button type="button" className="btn btn-ghost btn-icon btn-sm" onClick={() => onOpen(task)} aria-label="Edit task" data-tip="Edit">
@@ -134,6 +136,63 @@ const TaskItem = forwardRef(function TaskItem({ task, onToggle, onOpen, onDelete
 });
 
 export default TaskItem;
+
+/** Shopping lists: tap to set what an item costs. Saved prices are suggested next time. */
+function PriceTag({ task, symbol, readOnly, onChanged }) {
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState('');
+  const has = task.price !== null && task.price !== undefined;
+
+  async function save() {
+    setEditing(false);
+    const raw = value.trim();
+    const price = raw === '' ? null : Number(raw);
+    if (price !== null && (!Number.isFinite(price) || price < 0)) return toast.error('Enter a valid price');
+    if (price === (has ? task.price : null)) return;
+    try {
+      const d = await api(`/api/tasks/${task._id}`, { method: 'PATCH', body: { price } });
+      onChanged?.(d.task || { ...task, price });
+    } catch (err) {
+      toast.error(err.message);
+    }
+  }
+
+  if (editing) {
+    return (
+      <span className="price-tag editing" onClick={(e) => e.stopPropagation()}>
+        {symbol}
+        <input
+          autoFocus
+          inputMode="decimal"
+          value={value}
+          onChange={(e) => setValue(e.target.value.replace(/[^\d.]/g, ''))}
+          onBlur={save}
+          onKeyDown={(e) => {
+            e.stopPropagation();
+            if (e.key === 'Enter') e.currentTarget.blur();
+            if (e.key === 'Escape') setEditing(false);
+          }}
+          aria-label={`Price of ${task.title}`}
+        />
+      </span>
+    );
+  }
+  return (
+    <button
+      type="button"
+      className={`price-tag ${has ? '' : 'empty'}`}
+      disabled={readOnly}
+      onClick={(e) => {
+        e.stopPropagation();
+        setValue(has ? String(task.price) : '');
+        setEditing(true);
+      }}
+      aria-label={has ? `Price ${symbol}${task.price}, tap to change` : 'Add price'}
+    >
+      {has ? `${symbol}${Number(task.price).toLocaleString()}` : `+ ${symbol}`}
+    </button>
+  );
+}
 
 /** Hide the task now, offer Undo, and delete it for real a few seconds later */
 export function deleteTask(task, onHidden) {
